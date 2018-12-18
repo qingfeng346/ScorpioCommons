@@ -1,8 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.6</TargetFramework>
+    <TargetFrameworks>netstandard1.6;net40;netcoreapp1.0</TargetFrameworks>
     <RootNamespace>Scorpio.Commons</RootNamespace>
+    <Authors>while</Authors>
+    <PackageProjectUrl>https://github.com/qingfeng346/ScorpioCommons</PackageProjectUrl>
+    <Description>一些工具类</Description>
   </PropertyGroup>
 
 </Project>

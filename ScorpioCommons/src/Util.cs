@@ -15,6 +15,18 @@ namespace Scorpio.Commons {
             else
                 return string.Format("{0:f2} GB", Convert.ToDouble(by) / GB_LENGTH);
         }
+        public static string GetExcelColumn(int column) {
+            StringBuilder stringBuilder = new StringBuilder();
+            if (column < 26) {
+                stringBuilder.Append((char)('A' + column));
+            } else if (column < 27 * 26) {
+                stringBuilder.Append((char)('A' + column / 26 - 1));
+                stringBuilder.Append((char)('A' + column % 26));
+            } else {
+                throw new Exception("column is out of max column : " + column);
+            }
+            return stringBuilder.ToString();
+        }
         public static string ToOneUpper(string str) {
             if (string.IsNullOrWhiteSpace(str)) return str;
             if (str.Length <= 1) return str.ToUpper();
