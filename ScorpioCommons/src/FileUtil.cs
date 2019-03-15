@@ -89,6 +89,30 @@ namespace Scorpio.Commons {
                 return;
             Directory.Delete(sourceFolder);
         }
+        /// <summary> 复制文件 </summary>
+        public static void CopyFile(string sourceFile, string destFile, bool overwrite) {
+            if (FileExist(sourceFile)) {
+                CreateDirectoryByFile(destFile);
+                File.Copy(sourceFile, destFile, overwrite);
+            }
+        }
+        /// <summary> 拷贝文件夹 </summary>
+        public static void CopyFolder(string sourceFolder, string destFolder, string strFilePattern) {
+            if (!Directory.Exists(sourceFolder)) return;
+            if (!Directory.Exists(destFolder)) Directory.CreateDirectory(destFolder);
+            var files = Directory.GetFiles(sourceFolder, strFilePattern, SearchOption.TopDirectoryOnly);
+            foreach (var file in files) {
+                var name = Path.GetFileName(file);
+                var dest = Path.Combine(destFolder, name);
+                File.Copy(file, dest, true);
+            }
+            var folders = Directory.GetDirectories(sourceFolder);
+            foreach (string folder in folders) {
+                var name = Path.GetFileName(folder);
+                var dest = Path.Combine(destFolder, name);
+                CopyFolder(folder, dest, strFilePattern);
+            }
+        }
         /// <summary> 获得文件字符串 </summary>
         public static string GetFileString(string fileName) {
             return GetFileString(fileName, DefaultEncoding);
