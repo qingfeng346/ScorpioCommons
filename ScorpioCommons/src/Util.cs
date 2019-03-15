@@ -1,9 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Text;
+using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Scorpio.Commons {
     public static class Util {
+        public static readonly string BaseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+        public static readonly string CurrentDirectory = Environment.CurrentDirectory;
         private const double KB_LENGTH = 1024;              //1KB 的字节数
         private const double MB_LENGTH = 1048576;           //1MB 的字节数
         private const double GB_LENGTH = 1073741824;		//1GB 的字节数
@@ -44,6 +48,35 @@ namespace Scorpio.Commons {
         public static string GetMD5FromBuffer(byte[] buffer) {
             if (buffer == null) return null;
             return MD5.GetMd5String(buffer);
+        }
+        public static void RegisterApplication(string app) {
+            var path = Path.GetDirectoryName(app);
+            if (Environment.OSVersion.ToString().ToLower().Contains("windows")) {
+                var p = new List<string>(Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User).Split(';'));
+                if (!p.Contains(path)) {
+                    p.Add(path);
+                    Environment.SetEnvironmentVariable("Path", string.Join(";", p.ToArray()), EnvironmentVariableTarget.User);
+                }
+            } else {
+                var info = new ProcessStartInfo("ln");
+                info.Arguments = $"-s {app} /usr/bin/";
+                info.CreateNoWindow = false;
+                info.ErrorDialog = true;
+                info.UseShellExecute = true;
+                info.RedirectStandardOutput = false;
+                info.RedirectStandardError = false;
+                info.RedirectStandardInput = false;
+                var process = Process.Start(info);
+                process.WaitForExit();
+                process.Close();
+            }
+        }
+        public static void PirntSystemInfo() {
+            Logger.info($"os version : {Environment.OSVersion}");
+            Logger.info($"is 64bit process : {Environment.Is64BitProcess}");
+            Logger.info($"user name : {Environment.UserName}");
+            Logger.info($"app path is : {BaseDirectory}");
+            Logger.info($"environment path is : {CurrentDirectory}");
         }
     }
 }
