@@ -71,7 +71,7 @@ namespace Scorpio.Commons {
                 process.Close();
             }
         }
-        public static void PirntSystemInfo() {
+        public static void PrintSystemInfo() {
             Logger.info($"os version : {Environment.OSVersion}");
             Logger.info($"is 64bit process : {Environment.Is64BitProcess}");
             Logger.info($"user name : {Environment.UserName}");
