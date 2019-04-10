@@ -59,7 +59,7 @@ namespace Scorpio.Commons {
                 }
             } else {
                 var info = new ProcessStartInfo("ln");
-                info.Arguments = $"-s {app} /usr/bin/";
+                info.Arguments = $"-s {app} /usr/local/bin/";
                 info.CreateNoWindow = false;
                 info.ErrorDialog = true;
                 info.UseShellExecute = true;
