@@ -12,8 +12,8 @@ namespace Scorpio.Commons {
         public string[] GetValues() {
             return args.Count > 0 ? args.ToArray() : null;
         }
-        public string GetValue() {
-            return args.Count > 0 ? args[0] : null;
+        public string GetValue(string def) {
+            return args.Count > 0 ? args[0] : def;
         }
     }
     public class CommandLine {
@@ -21,8 +21,7 @@ namespace Scorpio.Commons {
             return new CommandLine().Parser(args);
         }
         private Dictionary<string, CommandLineArgument> arguments = new Dictionary<string, CommandLineArgument>();
-        public CommandLine() {
-        }
+        public CommandLine() {}
         public CommandLine Parser(string[] args) {
             arguments.Clear();
             CommandLineArgument argument = null;
@@ -48,7 +47,10 @@ namespace Scorpio.Commons {
             return arguments.ContainsKey(key) ? arguments[key].GetValues() : null;
         }
         public string GetValue(string key) {
-            return arguments.ContainsKey(key) ? arguments[key].GetValue() : null;
+            return GetValue(key, null);
+        }
+        public string GetValue(string key, string def) {
+            return arguments.ContainsKey(key) ? arguments[key].GetValue(def) : def;
         }
     }
 }
