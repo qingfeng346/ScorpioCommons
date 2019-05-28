@@ -43,14 +43,39 @@ namespace Scorpio.Commons {
         public bool HadValue(string key) {
             return arguments.ContainsKey(key);
         }
+        public bool HadValue(params string[] keys) {
+            foreach (var key in keys) {
+                if (arguments.ContainsKey(key)) {
+                    return true;
+                }
+            }
+            return false;
+        }
         public string[] GetValues(string key) {
             return arguments.ContainsKey(key) ? arguments[key].GetValues() : null;
         }
         public string GetValue(string key) {
-            return GetValue(key, null);
+            return GetValueDefault(key, null);
         }
-        public string GetValue(string key, string def) {
-            return arguments.ContainsKey(key) ? arguments[key].GetValue(def) : def;
+        public string GetValue(params string[] keys) {
+            return GetValueDefault(keys, null);
+        }
+        public string GetValueDefault(string key, string def) {
+            return GetValueDefault(new string[] { key }, def);
+        }
+        public string GetValueDefault(string[] keys, string def) {
+            foreach (var key in keys) {
+                if (arguments.ContainsKey(key)) {
+                    return arguments[key].GetValue(def);
+                }
+            }
+            return def;
+        }
+        public T GetValue<T>(string key) {
+            return (T)Convert.ChangeType(GetValue(key), typeof(T));
+        }
+        public T GetValue<T>(params string[] keys) {
+            return (T)Convert.ChangeType(GetValue(keys), typeof(T));
         }
     }
 }
