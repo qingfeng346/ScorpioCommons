@@ -1,5 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net40;</TargetFrameworks>
     <RootNamespace>Scorpio.Commons</RootNamespace>
@@ -7,5 +6,4 @@
     <PackageProjectUrl>https://github.com/qingfeng346/ScorpioCommons</PackageProjectUrl>
     <Description>一些工具类</Description>
   </PropertyGroup>
-
 </Project>

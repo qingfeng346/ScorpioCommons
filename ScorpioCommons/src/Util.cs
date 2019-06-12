@@ -32,7 +32,7 @@ namespace Scorpio.Commons {
             return stringBuilder.ToString();
         }
         public static string ToOneUpper(string str) {
-            if (string.IsNullOrWhiteSpace(str)) return str;
+            if (str == null || str.Trim().Length == 0) return str;
             if (str.Length <= 1) return str.ToUpper();
             return char.ToUpper(str[0]) + str.Substring(1);
         }
@@ -49,34 +49,73 @@ namespace Scorpio.Commons {
             if (buffer == null) return null;
             return MD5.GetMd5String(buffer);
         }
+        public static string StartProcess(string fileName) {
+            return StartProcess(fileName, null);
+        }
+        public static string StartProcess(string fileName, string arguments) {
+            string output = "";
+            try {
+                using (var process = new Process()) {
+                    process.StartInfo.FileName = fileName;
+                    if (arguments != null && arguments.Trim().Length != 0)
+                        process.StartInfo.Arguments = arguments;
+                    process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.EnableRaisingEvents = true;
+                    process.Start();
+                    output = process.StandardOutput.ReadToEnd();
+                    process.WaitForExit();
+                }
+            } catch (Exception e) {
+                Logger.error("StartProcess Error : " + e.ToString());
+                return null;
+            }
+            return output;
+        }
+
+        public static bool IsWindows() {
+            return Environment.OSVersion.Platform == PlatformID.Win32NT;
+        }
+        public static bool IsLinux() {
+            if (Environment.OSVersion.Platform == PlatformID.Unix) {
+                return StartProcess("uname").ToLower().Contains("linux");
+            }
+            return false;
+        }
+        public static bool IsMacOS() {
+            if (Environment.OSVersion.Platform == PlatformID.Unix) {
+                return StartProcess("uname").ToLower().Contains("darwin");
+            }
+            return false;
+        }
+
         public static void RegisterApplication(string app) {
-            var path = Path.GetDirectoryName(app);
-            if (Environment.OSVersion.ToString().ToLower().Contains("windows")) {
-                var p = new List<string>(Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User).Split(';'));
-                if (!p.Contains(path)) {
-                    p.Add(path);
-                    Environment.SetEnvironmentVariable("Path", string.Join(";", p.ToArray()), EnvironmentVariableTarget.User);
+            if (IsWindows()) {
+                var path = Path.GetDirectoryName(app);
+                var environmentVariables = new List<string>(Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User).Split(';'));
+                if (!environmentVariables.Contains(path)) {
+                    environmentVariables.Add(path);
+                    Environment.SetEnvironmentVariable("Path", string.Join(";", environmentVariables.ToArray()), EnvironmentVariableTarget.User);
                 }
             } else {
-                var info = new ProcessStartInfo("ln");
-                info.Arguments = $"-s {app} /usr/local/bin/";
-                info.CreateNoWindow = false;
-                info.ErrorDialog = true;
-                info.UseShellExecute = true;
-                info.RedirectStandardOutput = false;
-                info.RedirectStandardError = false;
-                info.RedirectStandardInput = false;
-                var process = Process.Start(info);
-                process.WaitForExit();
-                process.Close();
+                StartProcess("ln", $"-s {app} /usr/local/bin/");
             }
         }
         public static void PrintSystemInfo() {
-            Logger.info($"os version : {Environment.OSVersion}");
-            Logger.info($"is 64bit process : {Environment.Is64BitProcess}");
-            Logger.info($"user name : {Environment.UserName}");
-            Logger.info($"app path is : {BaseDirectory}");
-            Logger.info($"environment path is : {CurrentDirectory}");
+            string osPlatform = "Other";
+            if (IsWindows()) {
+                osPlatform = "Windows";
+            } else if (IsLinux()) {
+                osPlatform = "Linux";
+            } else if (IsMacOS()) {
+                osPlatform = "MacOS";
+            }
+            Logger.info($"OperatingSystem : {osPlatform}");
+            Logger.info($"UserName : {Environment.UserName}");
+            Logger.info($"Application Directory : {BaseDirectory}");
+            Logger.info($"Environment Directory : {CurrentDirectory}");
         }
     }
 }

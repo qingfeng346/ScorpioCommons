@@ -21,12 +21,13 @@ namespace Scorpio.Commons {
             return new CommandLine().Parser(args);
         }
         private Dictionary<string, CommandLineArgument> arguments = new Dictionary<string, CommandLineArgument>();
+        public string Type { get; private set; }
         public CommandLine() {}
         public CommandLine Parser(string[] args) {
             arguments.Clear();
             CommandLineArgument argument = null;
             for (int i = 0; i < args.Length; ++i) {
-                string arg = args[i];
+                var arg = args[i];
                 if (arg.StartsWith("-")) {
                     if (arguments.ContainsKey(arg)) {
                         argument = arguments[arg];
@@ -36,6 +37,8 @@ namespace Scorpio.Commons {
                     }
                 } else if (argument != null) {
                     argument.Add(arg);
+                } else {
+                    Type = arg;
                 }
             }
             return this;

@@ -10,11 +10,11 @@ namespace Scorpio.Commons {
         public static readonly Encoding DefaultEncoding = new UTF8Encoding(false);
         /// <summary> 判断文件是否存在 </summary>
         public static bool FileExist(String file) {
-            return !string.IsNullOrWhiteSpace(file) && File.Exists(file);
+            return file != null && file.Trim().Length != 0 && File.Exists(file);
         }
         /// <summary> 判断文件夹是否存在 </summary>
         public static bool PathExist(String path) {
-            return !string.IsNullOrWhiteSpace(path) && Directory.Exists(path);
+            return path != null && path.Trim().Length != 0 && Directory.Exists(path);
         }
         public static void CreateDirectoryByFile(string file) {
             CreateDirectory(Path.GetDirectoryName(file));
