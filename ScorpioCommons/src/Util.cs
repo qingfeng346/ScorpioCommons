@@ -3,9 +3,11 @@ using System.IO;
 using System.Text;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Net;
 
 namespace Scorpio.Commons {
     public static class Util {
+        const int READ_LENGTH = 8192;
         public static readonly string BaseDirectory = AppDomain.CurrentDomain.BaseDirectory;
         public static readonly string CurrentDirectory = Environment.CurrentDirectory;
         private const double KB_LENGTH = 1024;              //1KB 的字节数
@@ -116,6 +118,61 @@ namespace Scorpio.Commons {
             Logger.info($"UserName : {Environment.UserName}");
             Logger.info($"Application Directory : {BaseDirectory}");
             Logger.info($"Environment Directory : {CurrentDirectory}");
+        }
+        public static bool Download(string url, string fileName) {
+            Logger.info($"开始下载文件... : {fileName}");
+            try {
+                var request = (HttpWebRequest)HttpWebRequest.Create(url);
+                using (var response = request.GetResponse()) {
+                    using (var stream = response.GetResponseStream()) {
+                        var bytes = new byte[READ_LENGTH];
+                        using (var fileStream = new FileStream(fileName, FileMode.CreateNew)) {
+                            while (true) {
+                                var readSize = stream.Read(bytes, 0, READ_LENGTH);
+                                if (readSize <= 0) { break; }
+                                fileStream.Write(bytes, 0, readSize);
+                            }
+                            return true;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Logger.error("下载文件失败 : {0}", e.Message);
+            }
+            return false;
+        }
+        public static byte[] Request(string url) {
+            return Request(url, null);
+        }
+        public static byte[] Request(string url, Action<HttpWebRequest> postRequest) {
+            try {
+                var request = (HttpWebRequest)HttpWebRequest.Create(url);
+                if (postRequest != null) postRequest(request);
+                using (var response = request.GetResponse()) {
+                    using (var stream = response.GetResponseStream()) {
+                        var bytes = new byte[READ_LENGTH];
+                        using (var memoryStream = new MemoryStream()) {
+                            while (true) {
+                                var readSize = stream.Read(bytes, 0, READ_LENGTH);
+                                if (readSize <= 0) { break; }
+                                memoryStream.Write(bytes, 0, readSize);
+                            }
+                            return memoryStream.ToArray();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Logger.error("Request is Error : {0}", e.Message);
+            }
+            return null;
+        }
+        public static string RequestString(string url) {
+            var bytes = Request(url, null);
+            return bytes != null ? Encoding.UTF8.GetString(bytes) : "";
+        }
+        public static string RequestString(string url, Action<HttpWebRequest> postRequest) {
+            var bytes = Request(url, postRequest);
+            return bytes != null ? Encoding.UTF8.GetString(bytes) : "";
         }
     }
 }
