@@ -22,9 +22,9 @@ namespace Scorpio.Commons {
         }
         private Dictionary<string, CommandLineArgument> arguments = new Dictionary<string, CommandLineArgument>();
         public string Type { get; private set; }
-        public CommandLine() {}
         public CommandLine Parser(string[] args) {
             arguments.Clear();
+            Type = "";
             CommandLineArgument argument = null;
             for (int i = 0; i < args.Length; ++i) {
                 var arg = args[i];

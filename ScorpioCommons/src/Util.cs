@@ -7,6 +7,7 @@ using System.Net;
 
 namespace Scorpio.Commons {
     public static class Util {
+        const string DefaultUserAgent = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)";
         const int READ_LENGTH = 8192;
         public static readonly string BaseDirectory = AppDomain.CurrentDomain.BaseDirectory;
         public static readonly string CurrentDirectory = Environment.CurrentDirectory;
@@ -146,7 +147,17 @@ namespace Scorpio.Commons {
         }
         public static byte[] Request(string url, Action<HttpWebRequest> postRequest) {
             try {
+                //创建 SL/TLS 安全通道
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3
+                                    | SecurityProtocolType.Tls
+                                    | (SecurityProtocolType)0x300 //Tls11
+                                    | (SecurityProtocolType)0xC00; //Tls12
                 var request = (HttpWebRequest)HttpWebRequest.Create(url);
+                request.Method = "GET";
+                request.ProtocolVersion = HttpVersion.Version10;
+                request.UserAgent = DefaultUserAgent;
+                request.Credentials = CredentialCache.DefaultCredentials;
+                request.Timeout = 30000;                    //设定超时时间30秒
                 if (postRequest != null) postRequest(request);
                 using (var response = request.GetResponse()) {
                     using (var stream = response.GetResponseStream()) {
@@ -173,6 +184,9 @@ namespace Scorpio.Commons {
         public static string RequestString(string url, Action<HttpWebRequest> postRequest) {
             var bytes = Request(url, postRequest);
             return bytes != null ? Encoding.UTF8.GetString(bytes) : "";
+        }
+        public static bool isNullOrWhiteSpace(this string str) {
+            return str == null || str.Trim().Length == 0;
         }
     }
 }
