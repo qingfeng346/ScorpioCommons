@@ -148,10 +148,11 @@ namespace Scorpio.Commons {
         public static byte[] Request(string url, Action<HttpWebRequest> postRequest) {
             try {
                 //创建 SL/TLS 安全通道
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3
-                                    | SecurityProtocolType.Tls
+                try {
+                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
                                     | (SecurityProtocolType)0x300 //Tls11
                                     | (SecurityProtocolType)0xC00; //Tls12
+                } catch (Exception) { }
                 var request = (HttpWebRequest)HttpWebRequest.Create(url);
                 request.Method = "GET";
                 request.ProtocolVersion = HttpVersion.Version10;
