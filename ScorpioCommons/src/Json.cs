@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace Scorpio.Commons {
@@ -12,25 +13,31 @@ namespace Scorpio.Commons {
         public static string Serialize(object obj) {
             return new Serializer().Serialize(obj);
         }
+        //public static string ToJson(object obj) {
+        //    return new SerializerObject().Serialize(obj);
+        //}
+        //public static T FromJson<T>(string json) {
+        //    return default(T);
+        //}
         public class Parser {
-            const char END_CHAR = (char)0;
-            const char QUOTES = '"';            //引号
-            const char LEFT_BRACE = '{';        //{
-            const char RIGHT_BRACE = '}';       //}
-            const char LEFT_BRACKET = '[';      //[
-            const char RIGHT_BRACKET = ']';     //]
-            const char COMMA = ',';             //,
-            const string TRUE = "true";
-            const string FALSE = "false";
-            const string NULL = "null";
+            protected const char END_CHAR = (char)0;
+            protected const char QUOTES = '"';            //引号
+            protected const char LEFT_BRACE = '{';        //{
+            protected const char RIGHT_BRACE = '}';       //}
+            protected const char LEFT_BRACKET = '[';      //[
+            protected const char RIGHT_BRACKET = ']';     //]
+            protected const char COMMA = ',';             //,
+            protected const string TRUE = "true";
+            protected const string FALSE = "false";
+            protected const string NULL = "null";
 
             const string WHITE_SPACE = " \t\n\r";
             const string WORD_BREAK = " \t\n\r{}[],:\"";
 
-            private string m_Buffer;
-            private bool m_SupportLong;         //是否支持 数字无[.]解析成long值
-            private int m_Index;
-            private int m_Length;
+            protected string m_Buffer;
+            protected bool m_SupportLong;         //是否支持 数字无[.]解析成long值
+            protected int m_Index;
+            protected int m_Length;
             public Parser(string buffer, bool supportLong) {
                 m_SupportLong = supportLong;
                 m_Buffer = buffer;
@@ -190,16 +197,25 @@ namespace Scorpio.Commons {
                 }
             }
         }
+        public class ParserObject : Parser {
+            public ParserObject(string buffer, bool supportLong) : base(buffer, supportLong) { }
+            public object Parse(Type type) { return ReadObject(type); }
+            object ReadObject(Type type) {
+                var value = System.Activator.CreateInstance(type);
+
+                return value;
+            }
+        }
         public class Serializer {
             private StringBuilder builder;
             public Serializer() {
                 builder = new StringBuilder();
             }
-            public string Serialize(object obj) {
+            public virtual string Serialize(object obj) {
                 SerializeValue(obj);
                 return builder.ToString();
             }
-            void SerializeValue(object value) {
+            protected virtual void SerializeValue(object value) {
                 switch (value) {
                     case null: builder.Append("null"); return;
                     case bool b: builder.Append(b ? "true" : "false"); return;
@@ -210,7 +226,7 @@ namespace Scorpio.Commons {
                     default: SerializeOther(value); return;
                 }
             }
-            void SerializeString(string str) {
+            protected void SerializeString(string str) {
                 builder.Append('\"');
 
                 char[] charArray = str.ToCharArray();
@@ -249,7 +265,7 @@ namespace Scorpio.Commons {
                 }
                 builder.Append('\"');
             }
-            void SerializeArray(IList anArray) {
+            protected void SerializeArray(IList anArray) {
                 builder.Append('[');
                 bool first = true;
                 foreach (object obj in anArray) {
@@ -261,24 +277,18 @@ namespace Scorpio.Commons {
                 }
                 builder.Append(']');
             }
-            void SerializeDict(IDictionary obj) {
+            protected void SerializeDict(IDictionary obj) {
                 bool first = true;
-
                 builder.Append('{');
-
-                foreach (object e in obj.Keys) {
+                foreach (object key in obj.Keys) {
                     if (!first) {
                         builder.Append(',');
                     }
-
-                    SerializeString(e.ToString());
+                    SerializeString(key.ToString());
                     builder.Append(':');
-
-                    SerializeValue(obj[e]);
-
+                    SerializeValue(obj[key]);
                     first = false;
                 }
-
                 builder.Append('}');
             }
             void SerializeOther(object value) {
@@ -297,6 +307,45 @@ namespace Scorpio.Commons {
                 } else {
                     SerializeString(value.ToString());
                 }
+            }
+        }
+        public class SerializerObject : Serializer {
+            private StringBuilder builder;
+            public SerializerObject() {
+                builder = new StringBuilder();
+            }
+            public override string Serialize(object obj) {
+                SerializeValue(obj);
+                return builder.ToString();
+            }
+            protected override void SerializeValue(object value) {
+                switch (value) {
+                    case null: builder.Append("null"); return;
+                    case bool b: builder.Append(b ? "true" : "false"); return;
+                    case string str: SerializeString(str); return;
+                    case char c: SerializeString(c.ToString()); return;
+                    case IList list: SerializeArray(list); return;
+                    case IDictionary dict: SerializeDict(dict); return;
+                }
+                if (value is sbyte || value is byte || value is short || value is ushort ||
+                    value is int || value is uint || value is long || value is ulong ||
+                    value is float || value is double || value is decimal) {
+                    builder.Append(value.ToString());
+                } else {
+                    SerializeObject(value);
+                }
+            }
+            void SerializeObject(object value) {
+                var fields = value.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
+                bool first = true;
+                builder.Append('{');
+                foreach (var field in fields) {
+                    if (!first) { builder.Append(','); }
+                    SerializeString(field.Name);
+                    builder.Append(':');
+                    SerializeValue(field.GetValue(value));
+                }
+                builder.Append('}');
             }
         }
     }

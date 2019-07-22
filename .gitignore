@@ -1,2 +1,5 @@
 /bin
 /ScorpioCommons/*.user
+/Example/obj
+/Example/bin
+/.vs
