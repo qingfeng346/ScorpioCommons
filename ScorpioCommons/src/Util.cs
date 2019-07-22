@@ -47,6 +47,12 @@ namespace Scorpio.Commons {
         public static string GetMD5FromString(string buffer) {
             return GetMD5FromBuffer(Encoding.UTF8.GetBytes(buffer));
         }
+        public static string ToBase64(byte[] bytes) {
+            return Convert.ToBase64String(bytes);
+        }
+        public static byte[] FromBase64(string base64) {
+            return Convert.FromBase64String(base64);
+        }
         /// <summary> 根据一段内存获得MD5码 </summary>
         public static string GetMD5FromBuffer(byte[] buffer) {
             if (buffer == null) return null;

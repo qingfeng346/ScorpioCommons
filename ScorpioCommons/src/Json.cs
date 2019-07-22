@@ -7,7 +7,7 @@ using System.Text;
 namespace Scorpio.Commons {
     public class Json {
         public static object Deserialize(string json, bool supportLong = true) {
-            if (json == null) {return null; }
+            if (json == null) { return null; }
             return new Parser(json, supportLong).Parse();
         }
         public static string Serialize(object obj) {
