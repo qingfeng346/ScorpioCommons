@@ -185,8 +185,7 @@ namespace Scorpio.Commons {
             return null;
         }
         public static string RequestString(string url) {
-            var bytes = Request(url, null);
-            return bytes != null ? Encoding.UTF8.GetString(bytes) : "";
+            return RequestString(url, null);
         }
         public static string RequestString(string url, Action<HttpWebRequest> postRequest) {
             var bytes = Request(url, postRequest);

@@ -1,15 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace Scorpio.Commons {
     public interface ILogger {
         void info(string value);
         void warn(string value);
         void error(string value);
     }
+    public class MyLogger : ILogger {
+        public void info(string value) {
+            Console.WriteLine(value);
+        }
+        public void warn(string value) {
+            Console.WriteLine($"[warn] {value}");
+        }
+        public void error(string value) {
+            Console.WriteLine($"[error] {value}");
+        }
+    }
     public static class Logger {
         private static ILogger logger;
+        static Logger() {
+            SetLogger(new MyLogger());
+        }
         public static void SetLogger(ILogger logger) {
             Logger.logger = logger;
         }
