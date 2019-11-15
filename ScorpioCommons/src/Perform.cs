@@ -9,23 +9,49 @@ namespace Scorpio.Commons {
         }
         private CommandLine command;
         private Dictionary<string, ExecuteData> executes = new Dictionary<string, ExecuteData>();
+        public string Help = "";
+        public void Start(string[] args) {
+            Start(args, null, null);
+        }
         public void Start(string[] args, Action<CommandLine, string[]> pre, Action<CommandLine, string[]> post) {
             var type = "";
             try {
                 command = CommandLine.Parse(args);
-                var hasHelp = command.HadValue("-help", "-h");
-                type = command.Type.ToLower();
-                if (!executes.ContainsKey(type)) { type = ""; }
+                var hasHelp = command.HadValue("-help", "-h", "--help");
+                type = command.GetValue("-type", "-t");
+                if (type.isNullOrWhiteSpace()) { type = command.Type; }
+                if (type == "help") {
+                    PrintHelp();
+                    return;
+                }
+                var hasDef = executes.ContainsKey("");                      //默认执行函数
+                if (!executes.ContainsKey(type)) {
+                    if (hasDef) {
+                        type = "";
+                    } else {
+                        PrintHelp();
+                        return;
+                    }
+                }
                 pre?.Invoke(command, args);
                 var data = executes[type];
                 if (hasHelp) {
                     Logger.info(data.help);
                 } else {
-                    data.execute(command, args);
+                    data.execute?.Invoke(command, args);
                 }
                 post?.Invoke(command, args);
             } catch (Exception e) {
                 Logger.error("执行命令 [{0}] 出错 : {1}", type, e.ToString());
+            }
+        }
+        void PrintHelp() {
+            if (!Help.isNullOrWhiteSpace()) { Logger.info(Help); }
+            foreach (var pair in executes) {
+                if (pair.Key != "") {
+                    Logger.info("-------------------------------------");
+                    Logger.info(pair.Key + "\n  " + pair.Value.help);
+                }
             }
         }
         public void AddExecute(string type, string help, Action<CommandLine, string[]> execute) {
@@ -42,7 +68,7 @@ namespace Scorpio.Commons {
                 }
                 path = "";
             }
-            return Path.GetFullPath(Util.CurrentDirectory + "/" + path);
+            return Path.GetFullPath(Path.Combine(Util.CurrentDirectory, path));
         }
     }
 }

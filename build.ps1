@@ -1,4 +1,4 @@
-$version = "1.0.12"
+$version = "1.0.14"
 
 
 $today = Get-Date
@@ -18,5 +18,10 @@ $fileData | Out-File -Encoding utf8 ./src/Version.cs
 dotnet restore
 dotnet build
 dotnet pack -p:PackageVersion=$version -o ../bin
+
+Set-Location ../bin
+
+$nupkgName = "ScorpioCommons.$version.nupkg"
+dotnet nuget push $nupkgName -k oy2ibgtbm2lzfxzi3b4akycdlwhiwgxuzd3mdopbdtdqre -s https://api.nuget.org/v3/index.json
 
 Set-Location ../
