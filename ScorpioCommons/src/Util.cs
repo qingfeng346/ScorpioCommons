@@ -35,9 +35,14 @@ namespace Scorpio.Commons {
             return stringBuilder.ToString();
         }
         public static string ToOneUpper(string str) {
-            if (str == null || str.Trim().Length == 0) return str;
-            if (str.Length <= 1) return str.ToUpper();
+            if (str.isNullOrWhiteSpace()) return str;
+            if (str.Length == 1) return str.ToUpper();
             return char.ToUpper(str[0]) + str.Substring(1);
+        }
+        public static string ToOneLower(string str) {
+            if (str.isNullOrWhiteSpace()) return str;
+            if (str.Length == 1) return str.ToLower();
+            return char.ToLower(str[0]) + str.Substring(1);
         }
         /// <summary> 获得一个文件的MD5码 </summary>
         public static string GetMD5FromFile(string fileName) {
@@ -47,16 +52,20 @@ namespace Scorpio.Commons {
         public static string GetMD5FromString(string buffer) {
             return GetMD5FromBuffer(Encoding.UTF8.GetBytes(buffer));
         }
+        /// <summary> 根据一段内存获得MD5码 </summary>
+        public static string GetMD5FromBuffer(byte[] buffer) {
+            if (buffer == null) return null;
+            return MD5.GetMd5String(buffer);
+        }
+        /// <summary> 获得一个文件的MD5码 </summary>
+        public static string GetMD5FromStream(Stream stream) {
+            return MD5.GetMd5String(stream);
+        }
         public static string ToBase64(byte[] bytes) {
             return Convert.ToBase64String(bytes);
         }
         public static byte[] FromBase64(string base64) {
             return Convert.FromBase64String(base64);
-        }
-        /// <summary> 根据一段内存获得MD5码 </summary>
-        public static string GetMD5FromBuffer(byte[] buffer) {
-            if (buffer == null) return null;
-            return MD5.GetMd5String(buffer);
         }
         public static string StartProcess(string fileName) {
             return StartProcess(fileName, null);

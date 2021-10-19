@@ -49,19 +49,26 @@ namespace Scorpio.Commons {
 
     /// <summary> Summary description for MD5. </summary>
     public class MD5 : IDisposable {
-        static public MD5 Create() {
-            return new MD5();
-        }
         static public string GetMd5String(String source) {
             return GetMd5String(Encoding.UTF8.GetBytes(source));
         }
         static public string GetMd5String(byte[] buffer) {
-            MD5 md = MD5.Create();
-            byte[] hash = md.ComputeHash(buffer);
-            StringBuilder sb = new StringBuilder();
-            foreach (byte b in hash)
-                sb.Append(b.ToString("x2"));
-            return sb.ToString();
+            using (var md5 = new MD5()) {
+                byte[] hash = md5.ComputeHash(buffer);
+                StringBuilder sb = new StringBuilder();
+                foreach (byte b in hash)
+                    sb.Append(b.ToString("x2"));
+                return sb.ToString();
+            }
+        }
+        static public string GetMd5String(Stream stream) {
+            using (var md5 = new MD5()) {
+                byte[] hash = md5.ComputeHash(stream);
+                StringBuilder sb = new StringBuilder();
+                foreach (byte b in hash)
+                    sb.Append(b.ToString("x2"));
+                return sb.ToString();
+            }
         }
 
         #region base implementation of the MD5

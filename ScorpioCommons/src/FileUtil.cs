@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.IO;
+using System.Collections.Generic;
 
 namespace Scorpio.Commons {
     public static class FileUtil {
@@ -15,15 +16,26 @@ namespace Scorpio.Commons {
         public static bool PathExist(String path) {
             return path != null && path.Trim().Length != 0 && Directory.Exists(path);
         }
-        public static void CreateDirectoryByFile(string file) {
-            CreateDirectory(Path.GetDirectoryName(file));
+        public static bool CreateDirectoryByFile(string file) {
+            return CreateDirectory(Path.GetDirectoryName(file));
         }
-        public static void CreateDirectory(string path) {
-             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+        public static bool CreateDirectory(string path) {
+            if (!Directory.Exists(path)) {
+                Directory.CreateDirectory(path);
+                return true;
+            }
+            return false;
         }
         public static string RemoveExtension(string file) {
             var index = file.LastIndexOf(".");
             return file.Substring(0, index);
+        }
+        public static string ChangeExtension(string file, string extension) {
+            return Path.ChangeExtension(file, extension);
+        }
+        public static string GetFileExtension(string file) {
+            var index = file.LastIndexOf(".");
+            return file.Substring(index + 1);
         }
         public static string GetFileName(string path) {
             return Path.GetFileName(path);
@@ -73,43 +85,89 @@ namespace Scorpio.Commons {
             if (File.Exists(fileName)) File.Delete(fileName);
         }
         /// <summary> 删除文件夹 </summary>
-        public static void DeleteFiles(string sourceFolder, string strFilePattern, bool recursive) {
-            if (!PathExist(sourceFolder)) return;
-            var files = Directory.GetFiles(sourceFolder, strFilePattern);
-            foreach (string file in files) {
+        public static void DeleteFolder(string folder, string[] extensions, bool recursive) {
+            if (!Directory.Exists(folder)) return;
+            foreach (string file in GetFiles(folder, extensions, SearchOption.TopDirectoryOnly)) {
                 File.Delete(file);
             }
             if (recursive) {
-                var folders = Directory.GetDirectories(sourceFolder);
-                foreach (string folder in folders)
-                    DeleteFiles(folder, strFilePattern, recursive);
+                foreach (string dir in Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly)) {
+                    DeleteFolder(dir, extensions, recursive);
+                }
             }
-            if (Directory.GetDirectories(sourceFolder, "*", SearchOption.AllDirectories).Length > 0 || Directory.GetFiles(sourceFolder, "*", SearchOption.AllDirectories).Length > 0)
+            if (Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly).Length > 0 || Directory.GetFiles(folder, "*", SearchOption.TopDirectoryOnly).Length > 0)
                 return;
-            Directory.Delete(sourceFolder);
+            Directory.Delete(folder);
         }
         /// <summary> 复制文件 </summary>
-        public static void CopyFile(string sourceFile, string destFile, bool overwrite) {
-            if (FileExist(sourceFile)) {
-                CreateDirectoryByFile(destFile);
-                File.Copy(sourceFile, destFile, overwrite);
+        public static void CopyFile(string source, string target, bool overwrite) {
+            if (File.Exists(source)) {
+                CreateDirectoryByFile(target);
+                File.Copy(source, target, overwrite);
             }
         }
         /// <summary> 拷贝文件夹 </summary>
-        public static void CopyFolder(string sourceFolder, string destFolder, string strFilePattern) {
-            if (!Directory.Exists(sourceFolder)) return;
-            if (!Directory.Exists(destFolder)) Directory.CreateDirectory(destFolder);
-            var files = Directory.GetFiles(sourceFolder, strFilePattern, SearchOption.TopDirectoryOnly);
-            foreach (var file in files) {
-                var name = Path.GetFileName(file);
-                var dest = Path.Combine(destFolder, name);
-                File.Copy(file, dest, true);
+        public static void CopyFolder(string source, string target, string[] extensions, bool recursive) {
+            source = Path.GetFullPath(source);
+            target = Path.GetFullPath(target);
+            if (!Directory.Exists(source)) return;
+            if (!Directory.Exists(target)) Directory.CreateDirectory(target);
+            foreach (var file in GetFiles(source, extensions, SearchOption.TopDirectoryOnly)) {
+                File.Copy(file, Path.Combine(target, Path.GetFileName(file)), true);
             }
-            var folders = Directory.GetDirectories(sourceFolder);
-            foreach (string folder in folders) {
-                var name = Path.GetFileName(folder);
-                var dest = Path.Combine(destFolder, name);
-                CopyFolder(folder, dest, strFilePattern);
+            if (recursive) {
+                foreach (string folder in Directory.GetDirectories(source, "*", SearchOption.TopDirectoryOnly)) {
+                    CopyFolder(folder, Path.Combine(target, Path.GetFileName(folder)), extensions, recursive);
+                }
+            }
+        }
+        /// <summary> 同步两个文件夹 </summary>
+        public static void SyncFolder(string source, string target, string[] extensions, bool recursive) {
+            source = Path.GetFullPath(source);
+            target = Path.GetFullPath(target);
+            if (!Directory.Exists(source)) return;
+            if (!Directory.Exists(target)) { Directory.CreateDirectory(target); }
+            var files = new HashSet<string>();
+            foreach (var file in GetFiles(source, extensions, SearchOption.TopDirectoryOnly)) {
+                files.Add(Path.GetFileName(file));
+            }
+            foreach (var file in GetFiles(target, extensions, SearchOption.TopDirectoryOnly)) {
+                if (!files.Contains(Path.GetFileName(file))) {
+                    File.Delete(file);
+                }
+            }
+            foreach (var file in files) {
+                var sourceFile = Path.Combine(source, file);
+                var targetFile = Path.Combine(target, file);
+                var sourceFileInfo = new FileInfo(sourceFile);
+                var targetFileInfo = new FileInfo(targetFile);
+                if (!targetFileInfo.Exists || sourceFileInfo.Length != targetFileInfo.Length || sourceFileInfo.LastWriteTime != targetFileInfo.LastWriteTime) {
+                    File.Copy(sourceFile, targetFile, true);
+                }
+            }
+            var dirs = new HashSet<string>();
+            foreach (var dir in Directory.GetDirectories(source, "*", SearchOption.TopDirectoryOnly)) {
+                dirs.Add(Path.GetFileName(dir));
+            }
+            foreach (var dir in Directory.GetDirectories(target, "*", SearchOption.TopDirectoryOnly)) {
+                if (!dirs.Contains(Path.GetFileName(dir))) {
+                    DeleteFolder(dir, null, true);
+                }
+            }
+            foreach (var dir in dirs) {
+                SyncFolder(Path.Combine(source, dir), Path.Combine(target, dir), extensions, recursive);
+            }
+        }
+        /// <summary> 获取文件列表 </summary>
+        public static IEnumerable<string> GetFiles(string path, string[] extensions, SearchOption searchOption) {
+            if (extensions == null || extensions.Length == 0) {
+                return Directory.GetFiles(path, "*", searchOption);
+            } else {
+                var files = new List<string>();
+                foreach (var extension in extensions) {
+                    files.AddRange(Directory.GetFiles(path, $"*.{extension}", searchOption));
+                }
+                return files;
             }
         }
         /// <summary> 获得文件字符串 </summary>
@@ -132,5 +190,6 @@ namespace Scorpio.Commons {
                 return buffer;
             }
         }
+
     }
 }
