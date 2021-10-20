@@ -154,8 +154,10 @@ namespace Scorpio.Commons {
                     DeleteFolder(dir, null, true);
                 }
             }
-            foreach (var dir in dirs) {
-                SyncFolder(Path.Combine(source, dir), Path.Combine(target, dir), extensions, recursive);
+            if (recursive) {
+                foreach (var dir in dirs) {
+                    SyncFolder(Path.Combine(source, dir), Path.Combine(target, dir), extensions, recursive);
+                }
             }
         }
         /// <summary> 获取文件列表 </summary>
