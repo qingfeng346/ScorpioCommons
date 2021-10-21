@@ -20,8 +20,8 @@ dotnet build
 dotnet pack -p:PackageVersion=$version -o ../bin
 
 Set-Location ../bin
-
+$apiKey = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("b3kyZDVxNmEyenZ1enlsZm5rcHFhaGU0eGlxMnJuZHViY2ZuMmQ2MnE3YmoyYQ=="))
 $nupkgName = "ScorpioCommons.$version.nupkg"
-dotnet nuget push $nupkgName -k oy2ibgtbm2lzfxzi3b4akycdlwhiwgxuzd3mdopbdtdqre -s https://api.nuget.org/v3/index.json
+dotnet nuget push $nupkgName -k $apiKey -s https://api.nuget.org/v3/index.json
 
 Set-Location ../
