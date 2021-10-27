@@ -13,13 +13,12 @@ namespace Scorpio.Commons {
         public void Start(string[] args) {
             Start(args, null, null);
         }
-        public void Start(string[] args, Action<CommandLine, string[]> pre, Action<CommandLine, string[]> post) {
+        public void Start(string[] args, Action<string, CommandLine, string[]> pre, Action<string, CommandLine, string[]> post) {
             var type = "";
             try {
                 command = CommandLine.Parse(args);
                 var hasHelp = command.HadValue("-help", "-h", "--help");
-                type = command.GetValue("-type", "-t");
-                if (type.isNullOrWhiteSpace()) { type = command.Type; }
+                type = command.Type;
                 if (type == "help") {
                     PrintHelp();
                     return;
@@ -33,14 +32,14 @@ namespace Scorpio.Commons {
                         return;
                     }
                 }
-                pre?.Invoke(command, args);
+                pre?.Invoke(type, command, args);
                 var data = executes[type];
                 if (hasHelp) {
                     Logger.info(data.help);
                 } else {
                     data.execute?.Invoke(command, args);
                 }
-                post?.Invoke(command, args);
+                post?.Invoke(type, command, args);
             } catch (Exception e) {
                 Logger.error("执行命令 [{0}] 出错 : {1}", type, e.ToString());
             }
