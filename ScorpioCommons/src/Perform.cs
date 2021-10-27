@@ -5,7 +5,7 @@ namespace Scorpio.Commons {
     public class Perform {
         public class ExecuteData {
             public string help;
-            public Action<CommandLine, string[]> execute;
+            public Action<Perform, CommandLine, string[]> execute;
         }
         private CommandLine command;
         private Dictionary<string, ExecuteData> executes = new Dictionary<string, ExecuteData>();
@@ -13,7 +13,7 @@ namespace Scorpio.Commons {
         public void Start(string[] args) {
             Start(args, null, null);
         }
-        public void Start(string[] args, Action<string, CommandLine, string[]> pre, Action<string, CommandLine, string[]> post) {
+        public void Start(string[] args, Action<Perform, string, CommandLine, string[]> pre, Action<Perform, string, CommandLine, string[]> post) {
             var type = "";
             try {
                 command = CommandLine.Parse(args);
@@ -32,14 +32,14 @@ namespace Scorpio.Commons {
                         return;
                     }
                 }
-                pre?.Invoke(type, command, args);
+                pre?.Invoke(this, type, command, args);
                 var data = executes[type];
                 if (hasHelp) {
                     Logger.info(data.help);
                 } else {
-                    data.execute?.Invoke(command, args);
+                    data.execute?.Invoke(this, command, args);
                 }
-                post?.Invoke(type, command, args);
+                post?.Invoke(this, type, command, args);
             } catch (Exception e) {
                 Logger.error("执行命令 [{0}] 出错 : {1}", type, e.ToString());
             }
@@ -53,7 +53,7 @@ namespace Scorpio.Commons {
                 }
             }
         }
-        public void AddExecute(string type, string help, Action<CommandLine, string[]> execute) {
+        public void AddExecute(string type, string help, Action<Perform, CommandLine, string[]> execute) {
             executes[type.ToLower()] = new ExecuteData() { help = help, execute = execute };
         }
         public string GetPath(params string[] keys) {
