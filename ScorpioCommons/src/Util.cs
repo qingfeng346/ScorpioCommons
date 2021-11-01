@@ -67,15 +67,12 @@ namespace Scorpio.Commons {
         public static byte[] FromBase64(string base64) {
             return Convert.FromBase64String(base64);
         }
-        public static string StartProcess(string fileName) {
-            return StartProcess(fileName, null);
-        }
-        public static string StartProcess(string fileName, string arguments) {
+        public static string StartProcess(string fileName, string arguments = null) {
             string output = "";
             try {
                 using (var process = new Process()) {
                     process.StartInfo.FileName = fileName;
-                    if (arguments != null && arguments.Trim().Length != 0)
+                    if (!arguments.isNullOrWhiteSpace())
                         process.StartInfo.Arguments = arguments;
                     process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
                     process.StartInfo.CreateNoWindow = true;
@@ -135,68 +132,55 @@ namespace Scorpio.Commons {
             Logger.info($"Application Directory : {BaseDirectory}");
             Logger.info($"Environment Directory : {CurrentDirectory}");
         }
-        public static bool Download(string url, string fileName) {
+        public static void Download(string url, string fileName, Action<long, long> progress = null) {
             Logger.info($"开始下载文件... : {fileName}");
-            try {
-                var request = (HttpWebRequest)HttpWebRequest.Create(url);
-                using (var response = request.GetResponse()) {
-                    using (var stream = response.GetResponseStream()) {
-                        var bytes = new byte[READ_LENGTH];
-                        using (var fileStream = new FileStream(fileName, FileMode.CreateNew)) {
-                            while (true) {
-                                var readSize = stream.Read(bytes, 0, READ_LENGTH);
-                                if (readSize <= 0) { break; }
-                                fileStream.Write(bytes, 0, readSize);
-                            }
-                            return true;
+            var request = (HttpWebRequest)HttpWebRequest.Create(url);
+            using (var response = request.GetResponse()) {
+                var length = response.ContentLength;
+                using (var stream = response.GetResponseStream()) {
+                    var bytes = new byte[READ_LENGTH];
+                    var readed = 0;
+                    using (var fileStream = new FileStream(fileName, FileMode.CreateNew)) {
+                        while (true) {
+                            var readSize = stream.Read(bytes, 0, READ_LENGTH);
+                            if (readSize <= 0) { break; }
+                            readed += readSize;
+                            fileStream.Write(bytes, 0, readSize);
+                            progress?.Invoke(readed, length);
                         }
                     }
                 }
-            } catch (Exception e) {
-                Logger.error("下载文件失败 : {0}", e.Message);
             }
-            return false;
         }
-        public static byte[] Request(string url) {
-            return Request(url, null);
-        }
-        public static byte[] Request(string url, Action<HttpWebRequest> postRequest) {
+        public static byte[] Request(string url, Action<HttpWebRequest> postRequest = null) {
+            //创建 SL/TLS 安全通道
             try {
-                //创建 SL/TLS 安全通道
-                try {
-                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
-                                    | (SecurityProtocolType)0x300 //Tls11
-                                    | (SecurityProtocolType)0xC00; //Tls12
-                } catch (Exception) { }
-                var request = (HttpWebRequest)HttpWebRequest.Create(url);
-                request.Method = "GET";
-                request.ProtocolVersion = HttpVersion.Version10;
-                request.UserAgent = DefaultUserAgent;
-                request.Credentials = CredentialCache.DefaultCredentials;
-                request.Timeout = 30000;                    //设定超时时间30秒
-                if (postRequest != null) postRequest(request);
-                using (var response = request.GetResponse()) {
-                    using (var stream = response.GetResponseStream()) {
-                        var bytes = new byte[READ_LENGTH];
-                        using (var memoryStream = new MemoryStream()) {
-                            while (true) {
-                                var readSize = stream.Read(bytes, 0, READ_LENGTH);
-                                if (readSize <= 0) { break; }
-                                memoryStream.Write(bytes, 0, readSize);
-                            }
-                            return memoryStream.ToArray();
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
+                                | (SecurityProtocolType)0x300 //Tls11
+                                | (SecurityProtocolType)0xC00; //Tls12
+            } catch (Exception) { }
+            var request = (HttpWebRequest)HttpWebRequest.Create(url);
+            request.Method = "GET";
+            request.ProtocolVersion = HttpVersion.Version10;
+            request.UserAgent = DefaultUserAgent;
+            request.Credentials = CredentialCache.DefaultCredentials;
+            request.Timeout = 30000;                    //设定超时时间30秒
+            if (postRequest != null) postRequest(request);
+            using (var response = request.GetResponse()) {
+                using (var stream = response.GetResponseStream()) {
+                    var bytes = new byte[READ_LENGTH];
+                    using (var memoryStream = new MemoryStream()) {
+                        while (true) {
+                            var readSize = stream.Read(bytes, 0, READ_LENGTH);
+                            if (readSize <= 0) { break; }
+                            memoryStream.Write(bytes, 0, readSize);
                         }
+                        return memoryStream.ToArray();
                     }
                 }
-            } catch (Exception e) {
-                Logger.error("Request is Error : {0}", e.Message);
             }
-            return null;
         }
-        public static string RequestString(string url) {
-            return RequestString(url, null);
-        }
-        public static string RequestString(string url, Action<HttpWebRequest> postRequest) {
+        public static string RequestString(string url, Action<HttpWebRequest> postRequest = null) {
             var bytes = Request(url, postRequest);
             return bytes != null ? Encoding.UTF8.GetString(bytes) : "";
         }
