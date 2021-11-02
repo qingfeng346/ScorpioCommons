@@ -5,7 +5,9 @@ namespace Scorpio.Commons {
     public class CommandLineArgument {
         private List<string> args = new List<string>();
         public CommandLineArgument(string name) {
+            Name = name;
         }
+        public string Name { get; private set; }
         public void Add(string arg) {
             args.Add(arg);
         }
@@ -22,6 +24,7 @@ namespace Scorpio.Commons {
         }
         private Dictionary<string, CommandLineArgument> arguments = new Dictionary<string, CommandLineArgument>();
         public string Type { get; private set; }
+        public List<string> Args { get; } = new List<string>();
         public CommandLine Parser(string[] args) {
             arguments.Clear();
             Type = "";
@@ -37,8 +40,10 @@ namespace Scorpio.Commons {
                     }
                 } else if (argument != null) {
                     argument.Add(arg);
-                } else {
+                } else if (string.IsNullOrWhiteSpace(Type)) {
                     Type = arg;
+                } else {
+                    Args.Add(arg);
                 }
             }
             return this;
