@@ -33,9 +33,8 @@ namespace Scorpio.Commons {
         public static string ChangeExtension(string file, string extension) {
             return Path.ChangeExtension(file, extension);
         }
-        public static string GetFileExtension(string file) {
-            var index = file.LastIndexOf(".");
-            return file.Substring(index + 1);
+        public static string GetExtension(string file) {
+            return Path.GetExtension(file);
         }
         public static string GetFileName(string path) {
             return Path.GetFileName(path);
@@ -85,19 +84,40 @@ namespace Scorpio.Commons {
             if (File.Exists(fileName)) File.Delete(fileName);
         }
         /// <summary> 删除文件夹 </summary>
-        public static void DeleteFolder(string folder, string[] extensions, bool recursive) {
+        public static void DeleteFolder(string folder, string[] searchPatterns, bool recursive) {
             if (!Directory.Exists(folder)) return;
-            foreach (string file in GetFiles(folder, extensions, SearchOption.TopDirectoryOnly)) {
+            foreach (string file in GetFiles(folder, searchPatterns, SearchOption.TopDirectoryOnly)) {
                 File.Delete(file);
             }
             if (recursive) {
                 foreach (string dir in Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly)) {
-                    DeleteFolder(dir, extensions, recursive);
+                    DeleteFolder(dir, searchPatterns, recursive);
                 }
             }
-            if (Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly).Length > 0 || Directory.GetFiles(folder, "*", SearchOption.TopDirectoryOnly).Length > 0)
-                return;
+            DeleteFolderIfEmpty(folder);
+        }
+        /// <summary> 如果是空文件夹,则删除 </summary>
+        public static bool DeleteFolderIfEmpty(string folder) {
+            if (!Directory.Exists(folder)) {
+                return false;
+            }
+            if (Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly).Length > 0 || Directory.GetFiles(folder, "*", SearchOption.TopDirectoryOnly).Length > 0) { 
+                return false;
+            }
             Directory.Delete(folder);
+            return true;
+        }
+        /// <summary> 删除空文件夹 </summary>
+        public static void DeleteEmptyFolder(string folder, bool recursive) {
+            if (!Directory.Exists(folder)) { return; }
+            var dirs = Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly);
+            foreach (var dir in dirs) {
+                if (recursive) {
+                    DeleteEmptyFolder(dir, recursive);
+                }
+                DeleteFolderIfEmpty(dir);
+            }
+            DeleteFolderIfEmpty(folder);
         }
         /// <summary> 复制文件 </summary>
         public static void CopyFile(string source, string target, bool overwrite) {
@@ -106,32 +126,54 @@ namespace Scorpio.Commons {
                 File.Copy(source, target, overwrite);
             }
         }
+        /// <summary> 移动文件 </summary>
+        public static void MoveFile(string source, string target, bool overwrite) {
+            if (FileExist(source)) {
+                CreateDirectoryByFile(target);
+                if (overwrite) DeleteFile(target);
+                File.Move(source, target);
+            }
+        }
         /// <summary> 拷贝文件夹 </summary>
-        public static void CopyFolder(string source, string target, string[] extensions, bool recursive) {
+        public static void CopyFolder(string source, string target, string[] searchPatterns, bool recursive) {
             source = Path.GetFullPath(source);
             target = Path.GetFullPath(target);
             if (!Directory.Exists(source)) return;
             if (!Directory.Exists(target)) Directory.CreateDirectory(target);
-            foreach (var file in GetFiles(source, extensions, SearchOption.TopDirectoryOnly)) {
+            foreach (var file in GetFiles(source, searchPatterns, SearchOption.TopDirectoryOnly)) {
                 File.Copy(file, Path.Combine(target, Path.GetFileName(file)), true);
             }
             if (recursive) {
                 foreach (string folder in Directory.GetDirectories(source, "*", SearchOption.TopDirectoryOnly)) {
-                    CopyFolder(folder, Path.Combine(target, Path.GetFileName(folder)), extensions, recursive);
+                    CopyFolder(folder, Path.Combine(target, Path.GetFileName(folder)), searchPatterns, recursive);
                 }
             }
         }
+        /// <summary> 移动文件夹 </summary>
+        public static void MoveFolder(string source, string target, string[] searchPatterns, bool recursive, bool overwrite) {
+            if (!Directory.Exists(source)) return;
+            if (!Directory.Exists(target)) Directory.CreateDirectory(target);
+            foreach (string file in GetFiles(source, searchPatterns, SearchOption.TopDirectoryOnly)) {
+                MoveFile(file, Path.Combine(target, Path.GetFileName(file)), overwrite);
+            }
+            if (recursive) {
+                foreach (string folder in Directory.GetDirectories(source, "*", SearchOption.TopDirectoryOnly)) {
+                    MoveFolder(folder, Path.Combine(target, Path.GetFileName(folder)), searchPatterns, recursive, overwrite);
+                }
+            }
+            DeleteFolderIfEmpty(source);
+        }
         /// <summary> 同步两个文件夹 </summary>
-        public static void SyncFolder(string source, string target, string[] extensions, bool recursive) {
+        public static void SyncFolder(string source, string target, string[] searchPatterns, bool recursive) {
             source = Path.GetFullPath(source);
             target = Path.GetFullPath(target);
             if (!Directory.Exists(source)) return;
             if (!Directory.Exists(target)) { Directory.CreateDirectory(target); }
             var files = new HashSet<string>();
-            foreach (var file in GetFiles(source, extensions, SearchOption.TopDirectoryOnly)) {
+            foreach (var file in GetFiles(source, searchPatterns, SearchOption.TopDirectoryOnly)) {
                 files.Add(Path.GetFileName(file));
             }
-            foreach (var file in GetFiles(target, extensions, SearchOption.TopDirectoryOnly)) {
+            foreach (var file in GetFiles(target, searchPatterns, SearchOption.TopDirectoryOnly)) {
                 if (!files.Contains(Path.GetFileName(file))) {
                     File.Delete(file);
                 }
@@ -156,18 +198,18 @@ namespace Scorpio.Commons {
             }
             if (recursive) {
                 foreach (var dir in dirs) {
-                    SyncFolder(Path.Combine(source, dir), Path.Combine(target, dir), extensions, recursive);
+                    SyncFolder(Path.Combine(source, dir), Path.Combine(target, dir), searchPatterns, recursive);
                 }
             }
         }
         /// <summary> 获取文件列表 </summary>
-        public static IEnumerable<string> GetFiles(string path, string[] extensions, SearchOption searchOption) {
-            if (extensions == null || extensions.Length == 0) {
-                return Directory.GetFiles(path, "*", searchOption);
+        public static List<string> GetFiles(string path, string[] searchPatterns, SearchOption searchOption) {
+            if (searchPatterns == null || searchPatterns.Length == 0) {
+                return new List<string>(Directory.GetFiles(path, "*", searchOption));
             } else {
                 var files = new List<string>();
-                foreach (var extension in extensions) {
-                    files.AddRange(Directory.GetFiles(path, $"*.{extension}", searchOption));
+                foreach (var searchPattern in searchPatterns) {
+                    files.AddRange(Directory.GetFiles(path, searchPattern, searchOption));
                 }
                 return files;
             }
