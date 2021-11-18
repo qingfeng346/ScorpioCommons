@@ -10,39 +10,35 @@ namespace Scorpio.Commons {
         private CommandLine command;
         private Dictionary<string, ExecuteData> executes = new Dictionary<string, ExecuteData>();
         public string Help = "";
+        public string Type { get; private set; }
         public void Start(string[] args) {
             Start(args, null, null);
         }
         public void Start(string[] args, Action<Perform, string, CommandLine, string[]> pre, Action<Perform, string, CommandLine, string[]> post) {
-            var type = "";
-            try {
-                command = CommandLine.Parse(args);
-                var hasHelp = command.HadValue("-help", "-h", "--help");
-                type = command.Type.ToLowerInvariant();
-                if (type == "help") {
+            command = CommandLine.Parse(args);
+            Type = command.Type.ToLowerInvariant();
+            var hasHelp = command.HadValue("-help", "-h", "--help");
+            if (Type == "help") {
+                PrintHelp();
+                return;
+            }
+            var hasDef = executes.ContainsKey("");                      //默认执行函数
+            if (!executes.ContainsKey(Type)) {
+                if (hasDef) {
+                    Type = "";
+                } else {
                     PrintHelp();
                     return;
                 }
-                var hasDef = executes.ContainsKey("");                      //默认执行函数
-                if (!executes.ContainsKey(type)) {
-                    if (hasDef) {
-                        type = "";
-                    } else {
-                        PrintHelp();
-                        return;
-                    }
-                }
-                pre?.Invoke(this, type, command, args);
-                var data = executes[type];
-                if (hasHelp) {
-                    Logger.info(data.help);
-                } else {
-                    data.execute?.Invoke(this, command, args);
-                }
-                post?.Invoke(this, type, command, args);
-            } catch (Exception e) {
-                Logger.error("执行命令 [{0}] 出错 : {1}", type, e.ToString());
             }
+            pre?.Invoke(this, Type, command, args);
+            var data = executes[Type];
+            if (hasHelp) {
+                Logger.info(data.help);
+            } else {
+                data.execute?.Invoke(this, command, args);
+            }
+            post?.Invoke(this, Type, command, args);
         }
         void PrintHelp() {
             if (!Help.isNullOrWhiteSpace()) { Logger.info(Help); }
