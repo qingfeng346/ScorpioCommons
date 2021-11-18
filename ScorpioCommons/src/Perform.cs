@@ -18,7 +18,7 @@ namespace Scorpio.Commons {
             try {
                 command = CommandLine.Parse(args);
                 var hasHelp = command.HadValue("-help", "-h", "--help");
-                type = command.Type;
+                type = command.Type.ToLowerInvariant();
                 if (type == "help") {
                     PrintHelp();
                     return;
@@ -54,7 +54,7 @@ namespace Scorpio.Commons {
             }
         }
         public void AddExecute(string type, string help, Action<Perform, CommandLine, string[]> execute) {
-            executes[type.ToLower()] = new ExecuteData() { help = help, execute = execute };
+            executes[type.ToLowerInvariant()] = new ExecuteData() { help = help, execute = execute };
         }
         public string GetPath(params string[] keys) {
             return GetPath(keys, false);
