@@ -133,21 +133,25 @@ namespace Scorpio.Commons {
             Logger.info($"Environment Directory : {CurrentDirectory}");
         }
         public static void Download(string url, string fileName, Action<long, long> progress = null) {
-            Logger.info($"开始下载文件... : {fileName}");
+            FileUtil.DeleteFile(fileName);
+            using (var fileStream = new FileStream(fileName, FileMode.CreateNew)) {
+                Download(url, fileStream, progress);
+            }
+        }
+        public static void Download(string url, Stream stream, Action<long, long> progress = null) {
+            Logger.info($"开始下载文件... : {url}");
             var request = (HttpWebRequest)HttpWebRequest.Create(url);
             using (var response = request.GetResponse()) {
                 var length = response.ContentLength;
-                using (var stream = response.GetResponseStream()) {
+                using (var responseStream = response.GetResponseStream()) {
                     var bytes = new byte[READ_LENGTH];
                     var readed = 0;
-                    using (var fileStream = new FileStream(fileName, FileMode.CreateNew)) {
-                        while (true) {
-                            var readSize = stream.Read(bytes, 0, READ_LENGTH);
-                            if (readSize <= 0) { break; }
-                            readed += readSize;
-                            fileStream.Write(bytes, 0, readSize);
-                            progress?.Invoke(readed, length);
-                        }
+                    while (true) {
+                        var readSize = responseStream.Read(bytes, 0, READ_LENGTH);
+                        if (readSize <= 0) { break; }
+                        readed += readSize;
+                        stream.Write(bytes, 0, readSize);
+                        progress?.Invoke(readed, length);
                     }
                 }
             }
