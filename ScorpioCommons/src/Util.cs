@@ -118,6 +118,19 @@ namespace Scorpio.Commons {
                 StartProcess("ln", $"-s {app} /usr/local/bin/");
             }
         }
+        public static void UnregisterApplication(string app) {
+            if (IsWindows()) {
+                var path = Path.GetFullPath(Path.GetDirectoryName(app));
+                var environmentVariables = new List<string>(Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User).Split(';'));
+                if (environmentVariables.Contains(path)) {
+                    environmentVariables.Remove(path);
+                    Environment.SetEnvironmentVariable("Path", string.Join(";", environmentVariables.ToArray()), EnvironmentVariableTarget.User);
+                }
+            } else {
+                var fileName = Path.GetFileName(app);
+                FileUtil.DeleteFile($"/usr/local/bin/{fileName}");
+            }
+        }
         public static void PrintSystemInfo() {
             string osPlatform = "Other";
             if (IsWindows()) {
