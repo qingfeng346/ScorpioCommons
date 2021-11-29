@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ScorpioCommons\ScorpioCommons.csproj" />
+    <ProjectReference Include="..\Scorpio.Commons\Scorpio.Commons.csproj" />
   </ItemGroup>
 
 </Project>

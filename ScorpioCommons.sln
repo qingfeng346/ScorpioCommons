@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29020.237
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example", "Example\Example.csproj", "{668D0E2B-B577-48CB-BC21-87D6E171799B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScorpioCommons", "ScorpioCommons\ScorpioCommons.csproj", "{CAEB463C-3043-41A7-9A12-2E4CB1DF0CE2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scorpio.Commons", "Scorpio.Commons\Scorpio.Commons.csproj", "{DE68A1D7-2CE9-41F0-AA49-70916C0237F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{668D0E2B-B577-48CB-BC21-87D6E171799B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{668D0E2B-B577-48CB-BC21-87D6E171799B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{668D0E2B-B577-48CB-BC21-87D6E171799B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CAEB463C-3043-41A7-9A12-2E4CB1DF0CE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CAEB463C-3043-41A7-9A12-2E4CB1DF0CE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CAEB463C-3043-41A7-9A12-2E4CB1DF0CE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CAEB463C-3043-41A7-9A12-2E4CB1DF0CE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE68A1D7-2CE9-41F0-AA49-70916C0237F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE68A1D7-2CE9-41F0-AA49-70916C0237F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE68A1D7-2CE9-41F0-AA49-70916C0237F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE68A1D7-2CE9-41F0-AA49-70916C0237F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

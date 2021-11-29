@@ -5,7 +5,7 @@ $today = Get-Date
 $date = $today.ToString('yyyy-MM-dd')
 Remove-Item ./bin/* -Force -Recurse
 
-Set-Location ./ScorpioCommons
+Set-Location ./Scorpio.Commons
 $fileData = @"
 namespace Scorpio.Commons {
     public static class Version {
@@ -20,8 +20,8 @@ dotnet build
 dotnet pack -p:PackageVersion=$version -o ../bin
 
 Set-Location ../bin
-$apiKey = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("b3kyZDVxNmEyenZ1enlsZm5rcHFhaGU0eGlxMnJuZHViY2ZuMmQ2MnE3YmoyYQ=="))
-$nupkgName = "ScorpioCommons.$version.nupkg"
-dotnet nuget push $nupkgName -k $apiKey -s https://api.nuget.org/v3/index.json
+# $apiKey = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("b3kyZDVxNmEyenZ1enlsZm5rcHFhaGU0eGlxMnJuZHViY2ZuMmQ2MnE3YmoyYQ=="))
+# $nupkgName = "ScorpioCommons.$version.nupkg"
+# dotnet nuget push $nupkgName -k $apiKey -s https://api.nuget.org/v3/index.json
 
 Set-Location ../
