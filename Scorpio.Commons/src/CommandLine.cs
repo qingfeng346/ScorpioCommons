@@ -2,40 +2,42 @@ using System;
 using System.Collections.Generic;
 
 namespace Scorpio.Commons {
-    public class CommandLineArgument {
-        private List<string> args = new List<string>();
-        public CommandLineArgument(string name) {
-            Name = name;
-        }
-        public string Name { get; private set; }
-        public void Add(string arg) {
-            args.Add(arg);
-        }
-        public string[] GetValues() {
-            return args.Count > 0 ? args.ToArray() : null;
-        }
-        public string GetValue(string def) {
-            return args.Count > 0 ? args[0] : def;
-        }
-    }
     public class CommandLine {
+        public class Argument {
+            private List<string> args = new List<string>();
+            public Argument(string name) {
+                Name = name;
+            }
+            public string Name { get; private set; }
+            public IReadOnlyList<string> Args => args;
+            public void Add(string arg) {
+                args.Add(arg);
+            }
+            public string[] GetValues() {
+                return args.Count > 0 ? args.ToArray() : null;
+            }
+            public string GetValue(string def) {
+                return args.Count > 0 ? args[0] : def;
+            }
+        }
         public static CommandLine Parse(string[] args) {
             return new CommandLine().Parser(args);
         }
-        private Dictionary<string, CommandLineArgument> arguments = new Dictionary<string, CommandLineArgument>();
+        private Dictionary<string, Argument> arguments = new Dictionary<string, Argument>();
         public string Type { get; private set; }
         public List<string> Args { get; } = new List<string>();
+        public IReadOnlyDictionary<string, Argument> Arguments => arguments;
         public CommandLine Parser(string[] args) {
             arguments.Clear();
             Type = "";
-            CommandLineArgument argument = null;
+            Argument argument = null;
             for (int i = 0; i < args.Length; ++i) {
                 var arg = args[i];
                 if (arg.StartsWith("-")) {
                     if (arguments.ContainsKey(arg)) {
                         argument = arguments[arg];
                     } else {
-                        argument = new CommandLineArgument(arg);
+                        argument = new Argument(arg);
                         arguments[arg] = argument;
                     }
                 } else if (argument != null) {
