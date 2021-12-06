@@ -63,7 +63,7 @@ namespace Scorpio.Commons {
                 }
                 path = "";
             }
-            return Path.GetFullPath(Path.Combine(Util.CurrentDirectory, path));
+            return Path.GetFullPath(Path.Combine(ScorpioUtil.CurrentDirectory, path));
         }
     }
 }

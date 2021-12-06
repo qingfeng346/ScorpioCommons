@@ -5,7 +5,7 @@ namespace Scorpio.Commons {
         void warn(string value);
         void error(string value);
     }
-    public class MyLogger : ILogger {
+    public class ConsoleLogger : ILogger {
         public void info(string value) {
             Console.WriteLine(value);
         }
@@ -19,7 +19,7 @@ namespace Scorpio.Commons {
     public static class Logger {
         private static ILogger logger;
         static Logger() {
-            SetLogger(new MyLogger());
+            SetLogger(new ConsoleLogger());
         }
         public static void SetLogger(ILogger logger) {
             Logger.logger = logger;
