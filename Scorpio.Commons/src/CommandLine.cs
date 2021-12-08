@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace Scorpio.Commons {
     public class CommandLine {
+        private readonly string[] EMPTY_ARGS = new string[0];
         public class Argument {
             private List<string> args = new List<string>();
             public Argument(string name) {
@@ -14,7 +15,7 @@ namespace Scorpio.Commons {
                 args.Add(arg);
             }
             public string[] GetValues() {
-                return args.Count > 0 ? args.ToArray() : null;
+                return args.ToArray();
             }
             public string GetValue(string def) {
                 return args.Count > 0 ? args[0] : def;
@@ -62,7 +63,16 @@ namespace Scorpio.Commons {
             return false;
         }
         public string[] GetValues(string key) {
-            return arguments.ContainsKey(key) ? arguments[key].GetValues() : null;
+            return arguments.ContainsKey(key) ? arguments[key].GetValues() : EMPTY_ARGS;
+        }
+        public string[] GetValues(string[] keys) {
+            var values = new List<string>();
+            foreach (var key in keys) {
+                if (arguments.ContainsKey(key)) {
+                    values.AddRange(arguments[key].GetValues());
+                }
+            }
+            return values.ToArray();
         }
         public string GetValue(string key) {
             return GetValueDefault(key, null);
