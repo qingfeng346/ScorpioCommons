@@ -68,13 +68,21 @@ namespace Scorpio.Commons {
         public static byte[] FromBase64(string base64) {
             return Convert.FromBase64String(base64);
         }
-        public static string StartProcess(string fileName, string arguments = null) {
+        public static string StartProcess(string fileName, string workingDirectory = null, IEnumerable<string> arguments = null) {
             string output = "";
             try {
                 using (var process = new Process()) {
                     process.StartInfo.FileName = fileName;
-                    if (!arguments.isNullOrWhiteSpace())
-                        process.StartInfo.Arguments = arguments;
+                    if (!string.IsNullOrEmpty(workingDirectory)) {
+                        process.StartInfo.WorkingDirectory = workingDirectory;
+                    }
+                    if (arguments != null) {
+                        var builder = new StringBuilder();
+                        foreach (var argument in arguments) {
+                            builder.Append($@" ""{argument}"" ");
+                        }
+                        process.StartInfo.Arguments = builder.ToString();
+                    }
                     process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
                     process.StartInfo.CreateNoWindow = true;
                     process.StartInfo.UseShellExecute = false;
