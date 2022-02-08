@@ -69,7 +69,7 @@ namespace Scorpio.Commons {
             return Convert.FromBase64String(base64);
         }
         public static string StartProcess(string fileName, string workingDirectory = null, IEnumerable<string> arguments = null) {
-            string output = "";
+            var output = new StringBuilder();
             try {
                 using (var process = new Process()) {
                     process.StartInfo.FileName = fileName;
@@ -89,14 +89,18 @@ namespace Scorpio.Commons {
                     process.StartInfo.RedirectStandardOutput = true;
                     process.EnableRaisingEvents = true;
                     process.Start();
-                    output = process.StandardOutput.ReadToEnd();
+                    while (!process.StandardOutput.EndOfStream) {
+                        var line = process.StandardOutput.ReadLine();
+                        Console.WriteLine(line);
+                        output.AppendLine(line);
+                    }
                     process.WaitForExit();
                 }
             } catch (Exception e) {
                 Logger.error("StartProcess Error : " + e.ToString());
                 return null;
             }
-            return output;
+            return output.ToString();
         }
 
         public static bool IsWindows() {
