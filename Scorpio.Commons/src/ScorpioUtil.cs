@@ -68,8 +68,7 @@ namespace Scorpio.Commons {
         public static byte[] FromBase64(string base64) {
             return Convert.FromBase64String(base64);
         }
-        public static string StartProcess(string fileName, string workingDirectory = null, IEnumerable<string> arguments = null) {
-            var output = new StringBuilder();
+        public static int StartProcess(string fileName, string workingDirectory = null, IEnumerable<string> arguments = null, Action<Process> preStart = null, Action<Process> waitExit = null) {
             try {
                 using (var process = new Process()) {
                     process.StartInfo.FileName = fileName;
@@ -88,19 +87,62 @@ namespace Scorpio.Commons {
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
                     process.EnableRaisingEvents = true;
+                    preStart?.Invoke(process);
                     process.Start();
-                    while (!process.StandardOutput.EndOfStream) {
-                        var line = process.StandardOutput.ReadLine();
-                        Console.WriteLine(line);
-                        output.AppendLine(line);
-                    }
+                    process.OutputDataReceived += (sender, args) => {
+                        Console.WriteLine(args.Data);
+                    };
+                    process.ErrorDataReceived += (sender, args) => {
+                        Console.Error.WriteLine(args.Data);
+                    };
+                    waitExit?.Invoke(process);
                     process.WaitForExit();
+                    return process.ExitCode;
                 }
             } catch (Exception e) {
                 Logger.error("StartProcess Error : " + e.ToString());
-                return null;
             }
-            return output.ToString();
+            return -1;
+        }
+        public static int StartCwd(string fileName, string workingDirectory = null, IEnumerable<string> arguments = null, Action<Process> preStart = null, Action<Process> waitExit = null) {
+            try {
+                using (var process = new Process()) {
+                    process.StartInfo.FileName = "cmd";
+                    if (!string.IsNullOrEmpty(workingDirectory)) {
+                        process.StartInfo.WorkingDirectory = workingDirectory;
+                    }
+                    process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
+                    process.StartInfo.CreateNoWindow = false;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardInput = true;
+                    process.EnableRaisingEvents = true;
+                    process.Start();
+                    process.OutputDataReceived += (sender, args) => {
+                        Console.WriteLine(args.Data);
+                    };
+                    process.ErrorDataReceived += (sender, args) => {
+                        Console.Error.WriteLine(args.Data);
+                    };
+                    var builder = new StringBuilder();
+                    builder.Append(fileName);
+                    if (arguments != null) {
+                        foreach (var argument in arguments) {
+                            builder.Append($@" ""{argument}"" ");
+                        }
+                    }
+                    preStart?.Invoke(process);
+                    process.StandardInput.WriteLine(builder.ToString());
+                    process.StandardInput.WriteLine();  //防止某些cmd有pause
+                    process.StandardInput.WriteLine("exit");
+                    waitExit?.Invoke(process);
+                    process.WaitForExit();
+                    return process.ExitCode;
+                }
+            } catch (Exception e) {
+                Logger.error("StartProcess Error : " + e.ToString());
+            }
+            return -1;
         }
 
         public static bool IsWindows() {
