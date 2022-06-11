@@ -10,9 +10,11 @@ namespace Example {
             //perform.Help = "fewafawefaewfawefawe";
             //perform.AddExecute("123123", "help", null);
             //perform.Start(args);
-            Console.WriteLine(ScorpioUtil.CurrentDirectory);
-            Console.WriteLine(ScorpioUtil.BaseDirectory);
-            Console.WriteLine(ScorpioUtil.StartProcess("cmd", null, new[] { "/c", "test.bat", "11 11", "22 22" }));
+            //Console.WriteLine(ScorpioUtil.CurrentDirectory);
+            //Console.WriteLine(ScorpioUtil.BaseDirectory);
+            //Console.WriteLine(ScorpioUtil.StartProcess("cmd", null, new[] { "/c", "test.bat", "11 11", "22 22" }));
+            long a = 123123123;
+            Console.WriteLine(a.GetMemory());
         }
     }
 }

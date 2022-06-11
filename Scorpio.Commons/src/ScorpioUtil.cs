@@ -15,13 +15,13 @@ namespace Scorpio.Commons {
         private const double KB_LENGTH = 1024;              //1KB 的字节数
         private const double MB_LENGTH = 1048576;           //1MB 的字节数
         private const double GB_LENGTH = 1073741824;		//1GB 的字节数
-        public static string GetMemory(long by) {
+        public static string GetMemory(this long by) {
             if (by < MB_LENGTH)
-                return string.Format("{0:f2} KB", Convert.ToDouble(by) / KB_LENGTH);
+                return string.Format("{0:0.##} KB", Convert.ToDouble(by) / KB_LENGTH);
             else if (by < GB_LENGTH)
-                return string.Format("{0:f2} MB", Convert.ToDouble(by) / MB_LENGTH);
+                return string.Format("{0:0.##} MB", Convert.ToDouble(by) / MB_LENGTH);
             else
-                return string.Format("{0:f2} GB", Convert.ToDouble(by) / GB_LENGTH);
+                return string.Format("{0:0.##} GB", Convert.ToDouble(by) / GB_LENGTH);
         }
         public static string GetExcelColumn(int column) {
             StringBuilder stringBuilder = new StringBuilder();
