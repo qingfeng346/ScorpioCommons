@@ -13,7 +13,7 @@ namespace Scorpio.Commons {
             Console.WriteLine($"[warn] {value}");
         }
         public void error(string value) {
-            Console.WriteLine($"[error] {value}");
+            Console.Error.WriteLine($"[error] {value}");
         }
     }
     public static class Logger {
