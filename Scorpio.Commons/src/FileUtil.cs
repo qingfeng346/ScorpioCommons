@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using System.IO;
 using System.Collections.Generic;
 
@@ -8,17 +7,31 @@ namespace Scorpio.Commons {
         //public static readonly byte[] BomBuffer = new byte[] { 0xef, 0xbb, 0xbf };
         public static readonly Encoding UTF8WithBom = new UTF8Encoding(true);
         public static readonly Encoding DefaultEncoding = new UTF8Encoding(false);
+        /// <summary> 首字母大写 </summary>
+        public static string ToOneUpper(string str) {
+            if (str.isNullOrWhiteSpace()) return str;
+            if (str.Length == 1) return str.ToUpper();
+            return char.ToUpper(str[0]) + str.Substring(1);
+        }
+        /// <summary> 首字母小写 </summary>
+        public static string ToOneLower(string str) {
+            if (str.isNullOrWhiteSpace()) return str;
+            if (str.Length == 1) return str.ToLower();
+            return char.ToLower(str[0]) + str.Substring(1);
+        }
         /// <summary> 判断文件是否存在 </summary>
-        public static bool FileExist(String file) {
-            return file != null && file.Trim().Length != 0 && File.Exists(file);
+        public static bool FileExist(string file) {
+            return !string.IsNullOrWhiteSpace(file) && File.Exists(file);
         }
         /// <summary> 判断文件夹是否存在 </summary>
-        public static bool PathExist(String path) {
-            return path != null && path.Trim().Length != 0 && Directory.Exists(path);
+        public static bool PathExist(string path) {
+            return !string.IsNullOrWhiteSpace(path) && Directory.Exists(path);
         }
+        /// <summary> 根据文件创建路径 </summary>
         public static bool CreateDirectoryByFile(string file) {
             return CreateDirectory(Path.GetDirectoryName(file));
         }
+        /// <summary> 创建路径 </summary>
         public static bool CreateDirectory(string path) {
             if (!Directory.Exists(path)) {
                 Directory.CreateDirectory(path);
@@ -26,21 +39,32 @@ namespace Scorpio.Commons {
             }
             return false;
         }
+        /// <summary> 删除后缀名 </summary>
         public static string RemoveExtension(string file) {
             var index = file.LastIndexOf(".");
             return file.Substring(0, index);
         }
+        /// <summary> 修改后缀名 </summary>
         public static string ChangeExtension(string file, string extension) {
             return Path.ChangeExtension(file, extension);
         }
+        /// <summary> 获取后缀名 </summary>
         public static string GetExtension(string file) {
             return Path.GetExtension(file);
         }
+        /// <summary> 获取文件名 </summary>
         public static string GetFileName(string path) {
             return Path.GetFileName(path);
         }
+        /// <summary> 获取不带后缀文件名 </summary>
         public static string GetFileNameWithoutExtension(string path) {
             return Path.GetFileNameWithoutExtension(path);
+        }
+        /// <summary> 获取文件相对路径 </summary>
+        public static string GetRelativePath(string file, string path) {
+            file = Path.GetFullPath(file);
+            path = Path.GetFullPath(path);
+            return file.Substring(path.Length + 1).Replace("\\", "/");
         }
 
         /// <summary> 根据字符串创建文件 </summary>
@@ -234,6 +258,24 @@ namespace Scorpio.Commons {
                 return buffer;
             }
         }
-
+        /// <summary> 获得一个文件的MD5码 </summary>
+        public static string GetMD5FromFile(string fileName) {
+            using (var stream = new FileStream(fileName, FileMode.Open)) {
+                return MD5.GetMd5String(stream);
+            }
+        }
+        /// <summary> 获得一段字符串的MD5 </summary>
+        public static string GetMD5FromString(string buffer) {
+            return GetMD5FromBuffer(Encoding.UTF8.GetBytes(buffer));
+        }
+        /// <summary> 根据一段内存获得MD5码 </summary>
+        public static string GetMD5FromBuffer(byte[] buffer) {
+            if (buffer == null) return null;
+            return MD5.GetMd5String(buffer);
+        }
+        /// <summary> 获得一个文件的MD5码 </summary>
+        public static string GetMD5FromStream(Stream stream) {
+            return MD5.GetMd5String(stream);
+        }
     }
 }
