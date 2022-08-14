@@ -66,7 +66,6 @@ namespace Scorpio.Commons {
             path = Path.GetFullPath(path);
             return file.Substring(path.Length + 1).Replace("\\", "/");
         }
-
         /// <summary> 根据字符串创建文件 </summary>
         public static void CreateFile(string fileName, string buffer, string[] filePath) {
             CreateFile(fileName, buffer, filePath, DefaultEncoding);
@@ -107,19 +106,6 @@ namespace Scorpio.Commons {
         public static void DeleteFile(string fileName) {
             if (File.Exists(fileName)) File.Delete(fileName);
         }
-        /// <summary> 删除文件夹 </summary>
-        public static void DeleteFolder(string folder, string[] searchPatterns, bool recursive) {
-            if (!Directory.Exists(folder)) return;
-            foreach (string file in GetFiles(folder, searchPatterns, SearchOption.TopDirectoryOnly)) {
-                File.Delete(file);
-            }
-            if (recursive) {
-                foreach (string dir in Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly)) {
-                    DeleteFolder(dir, searchPatterns, recursive);
-                }
-            }
-            DeleteFolderIfEmpty(folder);
-        }
         /// <summary> 如果是空文件夹,则删除 </summary>
         public static bool DeleteFolderIfEmpty(string folder) {
             if (!Directory.Exists(folder)) {
@@ -158,6 +144,19 @@ namespace Scorpio.Commons {
                 File.Move(source, target);
             }
         }
+        /// <summary> 删除文件夹 </summary>
+        public static void DeleteFolder(string folder, string[] searchPatterns, bool recursive) {
+            if (!Directory.Exists(folder)) return;
+            foreach (string file in GetFiles(folder, searchPatterns, SearchOption.TopDirectoryOnly)) {
+                File.Delete(file);
+            }
+            if (recursive) {
+                foreach (string dir in Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly)) {
+                    DeleteFolder(dir, searchPatterns, recursive);
+                }
+            }
+            DeleteFolderIfEmpty(folder);
+        }
         /// <summary> 拷贝文件夹 </summary>
         public static void CopyFolder(string source, string target, string[] searchPatterns, bool recursive) {
             source = Path.GetFullPath(source);
@@ -187,7 +186,7 @@ namespace Scorpio.Commons {
             }
             DeleteFolderIfEmpty(source);
         }
-        /// <summary> 同步两个文件夹 </summary>
+        /// <summary> 同步文件夹 </summary>
         public static void SyncFolder(string source, string target, string[] searchPatterns, bool recursive) {
             source = Path.GetFullPath(source);
             target = Path.GetFullPath(target);
