@@ -74,7 +74,7 @@ namespace Scorpio.Commons {
                     return process.ExitCode;
                 }
             } catch (Exception e) {
-                Logger.error("StartProcess Error : " + e.ToString());
+                logger.error("StartProcess Error : " + e.ToString());
             }
             return -1;
         }
@@ -114,7 +114,7 @@ namespace Scorpio.Commons {
                     return process.ExitCode;
                 }
             } catch (Exception e) {
-                Logger.error("StartProcess Error : " + e.ToString());
+                logger.error("StartProcess Error : " + e.ToString());
             }
             return -1;
         }
@@ -163,11 +163,11 @@ namespace Scorpio.Commons {
             } else if (IsMacOS()) {
                 osPlatform = "MacOS";
             }
-            Logger.info($"OperatingSystem : {osPlatform}");
-            Logger.info($"OSArchitecture : {RuntimeInformation.OSArchitecture}");
-            Logger.info($"UserName : {Environment.UserName}");
-            Logger.info($"Application Directory : {BaseDirectory}");
-            Logger.info($"Environment Directory : {CurrentDirectory}");
+            logger.info($"OperatingSystem : {osPlatform}");
+            logger.info($"OSArchitecture : {RuntimeInformation.OSArchitecture}");
+            logger.info($"UserName : {Environment.UserName}");
+            logger.info($"Application Directory : {BaseDirectory}");
+            logger.info($"Environment Directory : {CurrentDirectory}");
         }
         public static void Download(string url, string fileName, Action<long, long> progress = null) {
             FileUtil.DeleteFile(fileName);
@@ -176,7 +176,7 @@ namespace Scorpio.Commons {
             }
         }
         public static void Download(string url, Stream stream, Action<long, long> progress = null) {
-            Logger.info($"开始下载文件... : {url}");
+            logger.info($"开始下载文件... : {url}");
             var request = (HttpWebRequest)HttpWebRequest.Create(url);
             using (var response = request.GetResponse()) {
                 var length = response.ContentLength;

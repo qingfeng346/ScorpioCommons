@@ -9,13 +9,13 @@ namespace Scorpio.Commons {
         public static readonly Encoding DefaultEncoding = new UTF8Encoding(false);
         /// <summary> 首字母大写 </summary>
         public static string ToOneUpper(string str) {
-            if (str.isNullOrWhiteSpace()) return str;
+            if (string.IsNullOrWhiteSpace(str)) return str;
             if (str.Length == 1) return str.ToUpper();
             return char.ToUpper(str[0]) + str.Substring(1);
         }
         /// <summary> 首字母小写 </summary>
         public static string ToOneLower(string str) {
-            if (str.isNullOrWhiteSpace()) return str;
+            if (string.IsNullOrWhiteSpace(str)) return str;
             if (str.Length == 1) return str.ToLower();
             return char.ToLower(str[0]) + str.Substring(1);
         }
@@ -111,7 +111,7 @@ namespace Scorpio.Commons {
             if (!Directory.Exists(folder)) {
                 return false;
             }
-            if (Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly).Length > 0 || Directory.GetFiles(folder, "*", SearchOption.TopDirectoryOnly).Length > 0) { 
+            if (Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly).Length > 0 || Directory.GetFiles(folder, "*", SearchOption.TopDirectoryOnly).Length > 0) {
                 return false;
             }
             Directory.Delete(folder);
@@ -145,6 +145,10 @@ namespace Scorpio.Commons {
             }
         }
         /// <summary> 删除文件夹 </summary>
+        public static void DeleteFiles(string folder, string searchPattern, bool recursive) {
+            DeleteFolder(folder, searchPattern == null ? null : new[] { searchPattern }, recursive);
+        }
+        /// <summary> 删除文件夹 </summary>
         public static void DeleteFolder(string folder, string[] searchPatterns, bool recursive) {
             if (!Directory.Exists(folder)) return;
             foreach (string file in GetFiles(folder, searchPatterns, SearchOption.TopDirectoryOnly)) {
@@ -156,6 +160,10 @@ namespace Scorpio.Commons {
                 }
             }
             DeleteFolderIfEmpty(folder);
+        }
+        /// <summary> 拷贝文件夹 </summary>
+        public static void CopyFiles(string source, string target, string searchPattern, bool recursive) {
+            CopyFolder(source, target, searchPattern == null ? null : new[] { searchPattern }, recursive);
         }
         /// <summary> 拷贝文件夹 </summary>
         public static void CopyFolder(string source, string target, string[] searchPatterns, bool recursive) {
@@ -173,6 +181,10 @@ namespace Scorpio.Commons {
             }
         }
         /// <summary> 移动文件夹 </summary>
+        public static void MoveFiles(string source, string target, string searchPattern, bool recursive, bool overwrite) {
+            MoveFolder(source, target, searchPattern == null ? null : new[] { searchPattern }, recursive, overwrite);
+        }
+        /// <summary> 移动文件夹 </summary>
         public static void MoveFolder(string source, string target, string[] searchPatterns, bool recursive, bool overwrite) {
             if (!Directory.Exists(source)) return;
             if (!Directory.Exists(target)) Directory.CreateDirectory(target);
@@ -185,6 +197,10 @@ namespace Scorpio.Commons {
                 }
             }
             DeleteFolderIfEmpty(source);
+        }
+        /// <summary> 同步文件夹 </summary>
+        public static void SyncFiles(string source, string target, string searchPattern, bool recursive) {
+            SyncFolder(source, target, searchPattern == null ? null : new[] { searchPattern }, recursive);
         }
         /// <summary> 同步文件夹 </summary>
         public static void SyncFolder(string source, string target, string[] searchPatterns, bool recursive) {
@@ -224,6 +240,10 @@ namespace Scorpio.Commons {
                     SyncFolder(Path.Combine(source, dir), Path.Combine(target, dir), searchPatterns, recursive);
                 }
             }
+        }
+        /// <summary> 获取文件列表 </summary>
+        public static List<string> GetFiles(string path, string searchPattern, SearchOption searchOption) {
+            return GetFiles(path, searchPattern == null ? null : new[] { searchPattern }, searchOption);
         }
         /// <summary> 获取文件列表 </summary>
         public static List<string> GetFiles(string path, string[] searchPatterns, SearchOption searchOption) {

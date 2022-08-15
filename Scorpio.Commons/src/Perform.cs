@@ -5,6 +5,7 @@ namespace Scorpio.Commons {
     public class Perform {
         public class ExecuteData {
             public string help;
+            public string desc;
             public Action<Perform, CommandLine, string[]> execute;
         }
         private CommandLine command;
@@ -34,23 +35,22 @@ namespace Scorpio.Commons {
             pre?.Invoke(this, Type, command, args);
             var data = executes[Type];
             if (hasHelp) {
-                Logger.info(data.help);
+                logger.info($"{data.desc}\n{data.help}");
             } else {
                 data.execute?.Invoke(this, command, args);
             }
             post?.Invoke(this, Type, command, args);
         }
         void PrintHelp() {
-            if (!Help.isNullOrWhiteSpace()) { Logger.info(Help); }
+            if (!Help.isNullOrWhiteSpace()) { logger.info(Help); }
             foreach (var pair in executes) {
                 if (pair.Key != "") {
-                    Logger.info("-------------------------------------");
-                    Logger.info(pair.Key + "\n  " + pair.Value.help);
+                    logger.info(pair.Key + " - " + pair.Value.desc);
                 }
             }
         }
-        public void AddExecute(string type, string help, Action<Perform, CommandLine, string[]> execute) {
-            executes[type.ToLowerInvariant()] = new ExecuteData() { help = help, execute = execute };
+        public void AddExecute(string type, string desc, string help, Action<Perform, CommandLine, string[]> execute) {
+            executes[type.ToLowerInvariant()] = new ExecuteData() { desc = desc, help = help, execute = execute };
         }
         public string GetPath(params string[] keys) {
             return GetPath(keys, false);
