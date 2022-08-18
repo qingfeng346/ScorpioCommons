@@ -1,7 +1,17 @@
 {
   "profiles": {
-    "Example": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "Test Help": {
       "commandName": "Project",
+      "commandLineArgs": "test -help -a aaa -b bbb -c 100 ",
+      "workingDirectory": "$(ProjectDir)"
+    },
+    "Help": {
+      "commandName": "Project",
+      "commandLineArgs": "help",
       "workingDirectory": "$(ProjectDir)"
     }
   }

@@ -92,10 +92,16 @@ namespace Scorpio.Commons {
             return def;
         }
         public T GetValue<T>(string key) {
-            return (T)Convert.ChangeType(GetValue(key), typeof(T));
+            return (T)GetValue(key, typeof(T));
         }
         public T GetValue<T>(params string[] keys) {
-            return (T)Convert.ChangeType(GetValue(keys), typeof(T));
+            return (T)GetValue(typeof(T), keys);
+        }
+        public object GetValue(string key, Type type) {
+            return GetValue(key).ChangeType(type);
+        }
+        public object GetValue(Type type, params string[] keys) {
+            return GetValue(keys).ChangeType(type);
         }
     }
 }

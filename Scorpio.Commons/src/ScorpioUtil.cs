@@ -228,5 +228,35 @@ namespace Scorpio.Commons {
         public static bool isNullOrWhiteSpace(this string str) {
             return str == null || str.Trim().Length == 0;
         }
+        public static object ChangeType(this string value, Type type) {
+            if (type == typeof(string)) {
+                return value;
+            } else if (type == typeof(bool)) {
+                value = value.ToLowerInvariant();
+                return value == "true" || value == "yes" || value == "1";
+            } else if (type == typeof(sbyte) ||
+                       type == typeof(byte) ||
+                       type == typeof(short) ||
+                       type == typeof(ushort) ||
+                       type == typeof(int) ||
+                       type == typeof(uint) ||
+                       type == typeof(long) ||
+                       type == typeof(ulong) ||
+                       type == typeof(float) ||
+                       type == typeof(double) ||
+                       type == typeof(decimal)) {
+                return Convert.ChangeType(value, type);
+            } else if (type.IsEnum) {
+                if (int.TryParse(value, out var result)) {
+                    return Enum.ToObject(type, result);
+                } else {
+                    return Enum.Parse(type, value, true);
+                }
+            } else if (type == typeof(DateTime)) {
+                return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(double.Parse(value));
+            } else {
+                return null;
+            }
+        }
     }
 }
