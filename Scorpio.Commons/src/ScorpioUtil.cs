@@ -229,11 +229,28 @@ namespace Scorpio.Commons {
             return str == null || str.Trim().Length == 0;
         }
         public static object ChangeType(this string value, Type type) {
+            if (type.IsArray) {
+                var elementType = type.GetElementType();
+                var values = value.Split(',');
+                var result = Array.CreateInstance(elementType, values.Length);
+                for (var i = 0; i < values.Length; ++i) {
+                    result.SetValue(values[i].ChangeElementType(elementType), i);
+                }
+                return result;
+            } else {
+                return value.ChangeElementType(type);
+            }
+        }
+        static object ChangeElementType(this string value, Type type) {
             if (type == typeof(string)) {
                 return value;
             } else if (type == typeof(bool)) {
-                value = value.ToLowerInvariant();
-                return value == "true" || value == "yes" || value == "1";
+                if (string.IsNullOrEmpty(value)) {
+                    return true;
+                } else {
+                    value = value.ToLowerInvariant();
+                    return value == "true" || value == "yes" || value == "1";
+                }
             } else if (type == typeof(sbyte) ||
                        type == typeof(byte) ||
                        type == typeof(short) ||

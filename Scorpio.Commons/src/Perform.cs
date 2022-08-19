@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Scorpio.Commons {
     public class ParamterInfoAttribute : Attribute {
-        public bool required { get; set; } = true;
+        public bool required { get; set; }
         public string label { get; set; }
         public string def { get; set; }
     }
@@ -66,6 +66,8 @@ namespace Scorpio.Commons {
                     throw new Exception($"参数 {name} 是必须的, 不可为空");
                 } else if (!string.IsNullOrEmpty(info?.def)) {
                     args[i] = info.def.ChangeType(paramType);
+                } else if (param.HasDefaultValue) {
+                    args[i] = param.DefaultValue;
                 } else {
                     args[i] = paramType.IsValueType ? Activator.CreateInstance(paramType) : null;
                 }
