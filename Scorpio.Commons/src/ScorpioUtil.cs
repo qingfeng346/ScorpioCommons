@@ -228,6 +228,14 @@ namespace Scorpio.Commons {
         public static bool isNullOrWhiteSpace(this string str) {
             return str == null || str.Trim().Length == 0;
         }
+        public static string GetAlign(this string str, int length) {
+            var builder = new StringBuilder();
+            builder.Append(str);
+            for (var i = str.Length; i < length; ++i) {
+                builder.Append(' ');
+            }
+            return builder.ToString();
+        }
         public static object ChangeType(this string value, Type type) {
             if (type.IsArray) {
                 var elementType = type.GetElementType();

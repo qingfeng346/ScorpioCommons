@@ -9,6 +9,17 @@ namespace Scorpio.Commons {
         public bool required { get; set; }
         public string label { get; set; }
         public string def { get; set; }
+        public string[] param { get; set; }
+        internal void SetName(string name) {
+            var pars = new List<string>();
+            pars.Add($"-{name}");
+            if (param != null && param.Length > 0) {
+                pars.AddRange(param);
+            }
+            finishParam = pars.ToArray();
+        }
+        internal string[] finishParam { get; private set; }
+        internal string finishParamLabel => string.Join("|", finishParam);
     }
     public class Perform {
         public class ExecuteData {
@@ -56,16 +67,25 @@ namespace Scorpio.Commons {
             for (var i = 0; i < parameters.Length; ++i) {
                 var param = parameters[i];
                 var info = (ParamterInfoAttribute)param.GetCustomAttribute(typeof(ParamterInfoAttribute));
-                var name = $"-{param.Name}";
                 var paramType = param.ParameterType;
                 if (paramType == typeof(CommandLine)) {
                     args[i] = commandLine;
-                } else if (commandLine.HadValue(name)) {
+                    continue;
+                }
+                if (info != null) {
+                    info.SetName(param.Name);
+                    if (commandLine.HadValue(info.finishParam)) {
+                        args[i] = commandLine.GetValue(paramType, info.finishParam);
+                    } else if (info.required) {
+                        throw new Exception($"参数 {info.finishParamLabel} 是必须的, 不可为空");
+                    } else if (!string.IsNullOrEmpty(info.def)) {
+                        args[i] = info.def.ChangeType(paramType);
+                    }
+                    continue;
+                }
+                var name = $"-{param.Name}";
+                if (commandLine.HadValue(name)) {
                     args[i] = commandLine.GetValue(name, paramType);
-                } else if (info != null && info.required) {
-                    throw new Exception($"参数 {name} 是必须的, 不可为空");
-                } else if (!string.IsNullOrEmpty(info?.def)) {
-                    args[i] = info.def.ChangeType(paramType);
                 } else if (param.HasDefaultValue) {
                     args[i] = param.DefaultValue;
                 } else {
@@ -73,14 +93,6 @@ namespace Scorpio.Commons {
                 }
             }
             return args;
-        }
-        static string GetAlign(string str, int length) {
-            var builder = new StringBuilder();
-            builder.Append(str);
-            for (var i = str.Length; i < length; ++i) {
-                builder.Append(" ");
-            }
-            return builder.ToString();
         }
         static string GetHelp(Delegate dele) {
             var builder = new StringBuilder();
@@ -90,19 +102,19 @@ namespace Scorpio.Commons {
                 var param = parameters[i];
                 var info = (ParamterInfoAttribute)param.GetCustomAttribute(typeof(ParamterInfoAttribute));
                 if (info == null) { continue; }
-                maxLength = Math.Max(maxLength, param.Name.Length);
+                info.SetName(param.Name);
+                maxLength = Math.Max(maxLength, info.finishParamLabel.Length);
             }
             for (var i = 0; i < parameters.Length; ++i) {
                 var param = parameters[i];
                 var info = (ParamterInfoAttribute)param.GetCustomAttribute(typeof(ParamterInfoAttribute));
                 if (info == null) { continue; }
-                builder.Append(GetAlign($"  -{param.Name}", maxLength + 6));
-                if (info.required) {
-                    builder.Append("(必须)");
-                }
+                info.SetName(param.Name);
+                builder.Append($"  {info.finishParamLabel}".GetAlign(maxLength + 4));
+                builder.Append(info.required ? "(必须)" : "(选填)");
                 builder.Append(info.label);
                 if (!string.IsNullOrEmpty(info.def)) {
-                    builder.Append($"  默认:{info.def}");
+                    builder.Append($" 默认:{info.def}");
                 }
                 builder.AppendLine();
             }
@@ -120,8 +132,8 @@ namespace Scorpio.Commons {
             builder.AppendLine("所有命令");
             foreach (var pair in executes) {
                 if (pair.Key != "") {
-                    builder.Append(" ");
-                    builder.Append(GetAlign(pair.Key, maxLength + 4));
+                    builder.Append(' ');
+                    builder.Append(pair.Key.GetAlign(maxLength + 4));
                     builder.AppendLine(pair.Value.desc);
                 }
             }

@@ -27,7 +27,7 @@ namespace Example {
             //Console.WriteLine(b);
             //Console.WriteLine(c);
         }
-        static void test([ParamterInfo(label = "label", required = false)] string[] strs,
+        static void test([ParamterInfo(label = "label", param = new[]{"-aa", "-bb", "--aa"},  required = false)] string[] strs,
                            [ParamterInfo(label = "label")] int[] ints, int c = 200) {
             //Console.WriteLine(a);
             //Console.WriteLine(b);

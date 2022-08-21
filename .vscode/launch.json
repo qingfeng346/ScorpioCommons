@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/Example/bin/Debug/net6.0/Example.dll",
-            "args": ["test", "-strs", "aaa,bbb,ccc", "-ints", "111,222,333"],
+            "args": ["test", "-aa", "aaa,bbb,ccc", "-ints", "111,222,333"],
             "cwd": "${workspaceFolder}/Example",
             "console": "internalConsole",
             "stopAtEntry": false
