@@ -4,9 +4,26 @@ using System.Collections.Generic;
 
 namespace Scorpio.Commons {
     public static class FileUtil {
+        public enum NameType {
+            None,
+            Lower,
+            Upper,
+        }
         //public static readonly byte[] BomBuffer = new byte[] { 0xef, 0xbb, 0xbf };
         public static readonly Encoding UTF8WithBom = new UTF8Encoding(true);
         public static readonly Encoding DefaultEncoding = new UTF8Encoding(false);
+        private static string GetName(this string name, NameType nameType) {
+            switch (nameType) {
+                case NameType.None:
+                    return name;
+                case NameType.Lower:
+                    return name.ToLowerInvariant();
+                case NameType.Upper:
+                    return name.ToUpperInvariant();
+                default:
+                    return name;
+            }
+        }
         /// <summary> 首字母大写 </summary>
         public static string ToOneUpper(string str) {
             if (string.IsNullOrWhiteSpace(str)) return str;
@@ -167,16 +184,20 @@ namespace Scorpio.Commons {
         }
         /// <summary> 拷贝文件夹 </summary>
         public static void CopyFolder(string source, string target, string[] searchPatterns, bool recursive) {
+            CopyFolder(source, target, searchPatterns, recursive, NameType.None);
+        }
+        /// <summary> 拷贝文件夹 </summary>
+        public static void CopyFolder(string source, string target, string[] searchPatterns, bool recursive, NameType nameType) {
             source = Path.GetFullPath(source);
             target = Path.GetFullPath(target);
             if (!Directory.Exists(source)) return;
             if (!Directory.Exists(target)) Directory.CreateDirectory(target);
             foreach (var file in GetFiles(source, searchPatterns, SearchOption.TopDirectoryOnly)) {
-                File.Copy(file, Path.Combine(target, Path.GetFileName(file)), true);
+                File.Copy(file, Path.Combine(target, Path.GetFileName(file).GetName(nameType)), true);
             }
             if (recursive) {
                 foreach (string folder in Directory.GetDirectories(source, "*", SearchOption.TopDirectoryOnly)) {
-                    CopyFolder(folder, Path.Combine(target, Path.GetFileName(folder)), searchPatterns, recursive);
+                    CopyFolder(folder, Path.Combine(target, Path.GetFileName(folder).GetName(nameType)), searchPatterns, recursive);
                 }
             }
         }
@@ -186,14 +207,18 @@ namespace Scorpio.Commons {
         }
         /// <summary> 移动文件夹 </summary>
         public static void MoveFolder(string source, string target, string[] searchPatterns, bool recursive, bool overwrite) {
+            MoveFolder(source, target, searchPatterns, recursive, overwrite, NameType.None);
+        }
+        /// <summary> 移动文件夹 </summary>
+        public static void MoveFolder(string source, string target, string[] searchPatterns, bool recursive, bool overwrite, NameType nameType) {
             if (!Directory.Exists(source)) return;
             if (!Directory.Exists(target)) Directory.CreateDirectory(target);
             foreach (string file in GetFiles(source, searchPatterns, SearchOption.TopDirectoryOnly)) {
-                MoveFile(file, Path.Combine(target, Path.GetFileName(file)), overwrite);
+                MoveFile(file, Path.Combine(target, Path.GetFileName(file).GetName(nameType)), overwrite);
             }
             if (recursive) {
                 foreach (string folder in Directory.GetDirectories(source, "*", SearchOption.TopDirectoryOnly)) {
-                    MoveFolder(folder, Path.Combine(target, Path.GetFileName(folder)), searchPatterns, recursive, overwrite);
+                    MoveFolder(folder, Path.Combine(target, Path.GetFileName(folder).GetName(nameType)), searchPatterns, recursive, overwrite);
                 }
             }
             DeleteFolderIfEmpty(source);
@@ -204,22 +229,29 @@ namespace Scorpio.Commons {
         }
         /// <summary> 同步文件夹 </summary>
         public static void SyncFolder(string source, string target, string[] searchPatterns, bool recursive) {
+            SyncFolder(source, target, searchPatterns, recursive, NameType.None);
+        }
+        /// <summary> 同步文件夹 </summary>
+        public static void SyncFolder(string source, string target, string[] searchPatterns, bool recursive, NameType nameType) {
             source = Path.GetFullPath(source);
             target = Path.GetFullPath(target);
             if (!Directory.Exists(source)) return;
             if (!Directory.Exists(target)) { Directory.CreateDirectory(target); }
             var files = new HashSet<string>();
+            var existFiles = new HashSet<string>();
             foreach (var file in GetFiles(source, searchPatterns, SearchOption.TopDirectoryOnly)) {
-                files.Add(Path.GetFileName(file));
+                var name = Path.GetFileName(file);
+                files.Add(name);
+                existFiles.Add(name.GetName(nameType));
             }
             foreach (var file in GetFiles(target, searchPatterns, SearchOption.TopDirectoryOnly)) {
-                if (!files.Contains(Path.GetFileName(file))) {
+                if (!existFiles.Contains(Path.GetFileName(file))) {
                     File.Delete(file);
                 }
             }
             foreach (var file in files) {
                 var sourceFile = Path.Combine(source, file);
-                var targetFile = Path.Combine(target, file);
+                var targetFile = Path.Combine(target, file.GetName(nameType));
                 var sourceFileInfo = new FileInfo(sourceFile);
                 var targetFileInfo = new FileInfo(targetFile);
                 if (!targetFileInfo.Exists || sourceFileInfo.Length != targetFileInfo.Length || sourceFileInfo.LastWriteTime != targetFileInfo.LastWriteTime) {
@@ -227,17 +259,20 @@ namespace Scorpio.Commons {
                 }
             }
             var dirs = new HashSet<string>();
+            var existDirs = new HashSet<string>();
             foreach (var dir in Directory.GetDirectories(source, "*", SearchOption.TopDirectoryOnly)) {
-                dirs.Add(Path.GetFileName(dir));
+                var name = Path.GetFileName(dir);
+                dirs.Add(name);
+                existDirs.Add(name.GetName(nameType));
             }
             foreach (var dir in Directory.GetDirectories(target, "*", SearchOption.TopDirectoryOnly)) {
-                if (!dirs.Contains(Path.GetFileName(dir))) {
+                if (!existDirs.Contains(Path.GetFileName(dir))) {
                     DeleteFolder(dir, null, true);
                 }
             }
             if (recursive) {
                 foreach (var dir in dirs) {
-                    SyncFolder(Path.Combine(source, dir), Path.Combine(target, dir), searchPatterns, recursive);
+                    SyncFolder(Path.Combine(source, dir), Path.Combine(target, dir.GetName(nameType)), searchPatterns, recursive);
                 }
             }
         }
