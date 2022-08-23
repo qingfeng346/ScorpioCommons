@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Linq;
 
 namespace Scorpio.Commons {
     public class ParamterInfoAttribute : Attribute {
@@ -11,10 +12,10 @@ namespace Scorpio.Commons {
         public string def { get; set; }
         public string[] param { get; set; }
         internal void SetName(string name) {
-            var pars = new List<string>();
+            var pars = new HashSet<string>();
             pars.Add($"-{name}");
             if (param != null && param.Length > 0) {
-                pars.AddRange(param);
+                pars.UnionWith(param);
             }
             finishParam = pars.ToArray();
         }
