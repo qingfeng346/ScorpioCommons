@@ -139,16 +139,18 @@ namespace Scorpio.Commons {
             return true;
         }
         /// <summary> 删除空文件夹 </summary>
-        public static void DeleteEmptyFolder(string folder, bool recursive) {
-            if (!Directory.Exists(folder)) { return; }
+        public static bool DeleteEmptyFolder(string folder, bool recursive) {
+            if (!Directory.Exists(folder)) { return false; }
+            var changed = false;
             var dirs = Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly);
             foreach (var dir in dirs) {
                 if (recursive) {
-                    DeleteEmptyFolder(dir, recursive);
+                    changed |= DeleteEmptyFolder(dir, recursive);
                 }
-                DeleteFolderIfEmpty(dir);
+                changed |= DeleteFolderIfEmpty(dir);
             }
-            DeleteFolderIfEmpty(folder);
+            changed |= DeleteFolderIfEmpty(folder);
+            return changed;
         }
         /// <summary> 复制文件 </summary>
         public static void CopyFile(string source, string target, bool overwrite) {
@@ -339,6 +341,16 @@ namespace Scorpio.Commons {
         /// <summary> 获得一个文件的MD5码 </summary>
         public static string GetMD5FromStream(Stream stream) {
             return MD5.GetMd5String(stream);
+        }
+
+        public static byte[] GetMD5(string buffer) {
+            return GetMD5(DefaultEncoding.GetBytes(buffer));
+        }
+        public static byte[] GetMD5(byte[] buffer) {
+            if (buffer == null) return null;
+            using (MD5 md = new MD5()) {
+                return md.ComputeHash(buffer);
+            }
         }
     }
 }

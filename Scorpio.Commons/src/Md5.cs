@@ -54,23 +54,20 @@ namespace Scorpio.Commons {
         }
         static public string GetMd5String(byte[] buffer) {
             using (var md5 = new MD5()) {
-                byte[] hash = md5.ComputeHash(buffer);
-                StringBuilder sb = new StringBuilder();
-                foreach (byte b in hash)
-                    sb.Append(b.ToString("x2"));
-                return sb.ToString();
+                return HashToString(md5.ComputeHash(buffer));
             }
         }
         static public string GetMd5String(Stream stream) {
             using (var md5 = new MD5()) {
-                byte[] hash = md5.ComputeHash(stream);
-                StringBuilder sb = new StringBuilder();
-                foreach (byte b in hash)
-                    sb.Append(b.ToString("x2"));
-                return sb.ToString();
+                return HashToString(md5.ComputeHash(stream));
             }
         }
-
+        static public string HashToString(byte[] hash) {
+            StringBuilder sb = new StringBuilder();
+            foreach (byte b in hash)
+                sb.Append(b.ToString("x2"));
+            return sb.ToString();
+        }
         #region base implementation of the MD5
         #region constants
         private const byte S11 = 7;
