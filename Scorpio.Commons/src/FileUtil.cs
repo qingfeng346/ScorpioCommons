@@ -120,8 +120,12 @@ namespace Scorpio.Commons {
             }
         }
         /// <summary> 删除文件 </summary>
-        public static void DeleteFile(string fileName) {
-            if (File.Exists(fileName)) File.Delete(fileName);
+        public static bool DeleteFile(string fileName) {
+            if (File.Exists(fileName)) {
+                File.Delete(fileName);
+                return true;
+            }
+            return false;
         }
         /// <summary> 如果是空文件夹,则删除 </summary>
         public static bool DeleteFolderIfEmpty(string folder) {
@@ -224,21 +228,22 @@ namespace Scorpio.Commons {
             DeleteFolderIfEmpty(source);
         }
         /// <summary> 同步文件夹 </summary>
-        public static void SyncFiles(string source, string target, string searchPattern, bool recursive) {
-            SyncFolder(source, target, searchPattern == null ? null : new[] { searchPattern }, recursive);
+        public static bool SyncFiles(string source, string target, string searchPattern, bool recursive) {
+            return SyncFolder(source, target, searchPattern == null ? null : new[] { searchPattern }, recursive);
         }
         /// <summary> 同步文件夹 </summary>
-        public static void SyncFolder(string source, string target, string[] searchPatterns, bool recursive) {
-            SyncFolder(source, target, searchPatterns, recursive, NameType.None);
+        public static bool SyncFolder(string source, string target, string[] searchPatterns, bool recursive) {
+            return SyncFolder(source, target, searchPatterns, recursive, NameType.None);
         }
         /// <summary> 同步文件夹 </summary>
-        public static void SyncFolder(string source, string target, string[] searchPatterns, bool recursive, NameType nameType) {
+        public static bool SyncFolder(string source, string target, string[] searchPatterns, bool recursive, NameType nameType) {
             source = Path.GetFullPath(source);
             target = Path.GetFullPath(target);
-            if (!Directory.Exists(source)) return;
+            if (!Directory.Exists(source)) return false;
             if (!Directory.Exists(target)) { Directory.CreateDirectory(target); }
             var files = new HashSet<string>();
             var existFiles = new HashSet<string>();
+            var changed = false;
             foreach (var file in GetFiles(source, searchPatterns, SearchOption.TopDirectoryOnly)) {
                 var name = Path.GetFileName(file);
                 files.Add(name);
@@ -247,6 +252,7 @@ namespace Scorpio.Commons {
             foreach (var file in GetFiles(target, searchPatterns, SearchOption.TopDirectoryOnly)) {
                 if (!existFiles.Contains(Path.GetFileName(file))) {
                     File.Delete(file);
+                    changed = true;
                 }
             }
             foreach (var file in files) {
@@ -256,6 +262,7 @@ namespace Scorpio.Commons {
                 var targetFileInfo = new FileInfo(targetFile);
                 if (!targetFileInfo.Exists || sourceFileInfo.Length != targetFileInfo.Length || sourceFileInfo.LastWriteTime != targetFileInfo.LastWriteTime) {
                     File.Copy(sourceFile, targetFile, true);
+                    changed = true;
                 }
             }
             var dirs = new HashSet<string>();
@@ -268,13 +275,15 @@ namespace Scorpio.Commons {
             foreach (var dir in Directory.GetDirectories(target, "*", SearchOption.TopDirectoryOnly)) {
                 if (!existDirs.Contains(Path.GetFileName(dir))) {
                     DeleteFolder(dir, null, true);
+                    changed = true;
                 }
             }
             if (recursive) {
                 foreach (var dir in dirs) {
-                    SyncFolder(Path.Combine(source, dir), Path.Combine(target, dir.GetName(nameType)), searchPatterns, recursive);
+                    changed |= SyncFolder(Path.Combine(source, dir), Path.Combine(target, dir.GetName(nameType)), searchPatterns, recursive);
                 }
             }
+            return changed;
         }
         /// <summary> 获取文件列表 </summary>
         public static List<string> GetFiles(string path, string searchPattern, SearchOption searchOption) {
