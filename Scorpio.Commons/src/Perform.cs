@@ -7,16 +7,45 @@ using System.Linq;
 
 namespace Scorpio.Commons {
     public class ParamterInfoAttribute : Attribute {
-        public bool required { get; set; }
+        public bool required { get; set; } = true;
         public string label { get; set; }
         public string def { get; set; }
-        public string[] param { get; set; }
+        public string param { get; set; }
+        public ParamterInfoAttribute() { }
+        public ParamterInfoAttribute(string label) {
+            this.label = label;
+        }
+        public ParamterInfoAttribute(string label, bool required) {
+            this.label = label;
+            this.required = required;
+        }
+        public ParamterInfoAttribute(string label, string param) {
+            this.label = label;
+            this.param = param;
+        }
+        public ParamterInfoAttribute(string label, string param, bool required) {
+            this.label = label;
+            this.param = param;
+            this.required = required;
+        }
+        public ParamterInfoAttribute(string label, string param, string def) {
+            this.label = label;
+            this.param = param;
+            this.def = def;
+        }
+        public ParamterInfoAttribute(string label, string param, string def, bool required) {
+            this.label = label;
+            this.param = param;
+            this.def = def;
+            this.required = required;
+        }
         internal void SetName(string name) {
             var pars = new HashSet<string>();
             pars.Add($"-{name}");
             if (param != null && param.Length > 0) {
-                pars.UnionWith(param);
+                pars.UnionWith(param.Split('|'));
             }
+            pars.Remove("");
             finishParam = pars.ToArray();
         }
         internal string[] finishParam { get; private set; }

@@ -109,10 +109,14 @@ namespace Scorpio.Commons {
             if (!File.Exists(sourceFile) || !File.Exists(targetFile)) { 
                 return false;
             }
+            var sourceFileInfo = new FileInfo(sourceFile);
+            var targetFileInfo = new FileInfo(targetFile);
+            //首先比较大小,大小不同文件肯定不同
+            if (sourceFileInfo.Length != targetFileInfo.Length) {
+                return false;
+            }
             if (compareType == CompareType.SizeAndModifyTime) {
-                var sourceFileInfo = new FileInfo(sourceFile);
-                var targetFileInfo = new FileInfo(targetFile);
-                return sourceFileInfo.Length == targetFileInfo.Length && sourceFileInfo.LastWriteTimeUtc == targetFileInfo.LastWriteTimeUtc;
+                return sourceFileInfo.LastWriteTimeUtc == targetFileInfo.LastWriteTimeUtc;
             } else if (compareType == CompareType.Content) {
                 int sourceReaded, targetReaded;
                 byte[] sourceBuffer = new byte[ContentBlockSize];
@@ -130,9 +134,8 @@ namespace Scorpio.Commons {
                 return true;
             } else if (compareType == CompareType.MD5) {
                 return GetMD5FromFile(sourceFile) == GetMD5FromFile(targetFile);
-            } else {
-                return new FileInfo(sourceFile).Length == new FileInfo(targetFile).Length;
             }
+            return true;
         }
         /// <summary> 根据字符串创建文件 </summary>
         public static void CreateFile(string fileName, string buffer, string[] filePath) {
@@ -169,6 +172,18 @@ namespace Scorpio.Commons {
                 fs.Write(buffer, 0, buffer.Length);
                 fs.Flush();
             }
+        }
+        /// <summary> 同步一个文件 </summary>
+        public static bool SyncFile(string source, string target) {
+            return SyncFile(source, target, CompareType.Content);
+        }
+        /// <summary> 同步一个文件 </summary>
+        public static bool SyncFile(string source, string target, CompareType compareType) {
+            if (!CompareFile(source, target, compareType)) {
+                File.Copy(source, target, true);
+                return true;
+            }
+            return false;
         }
         /// <summary> 删除文件 </summary>
         public static bool DeleteFile(string fileName) {
@@ -374,6 +389,9 @@ namespace Scorpio.Commons {
                 fs.Read(buffer, 0, (int)length);
                 return buffer;
             }
+        }
+        public static string GetMD5FromFileStream(string fileName) {
+            return GetMD5FromFile(fileName);
         }
         /// <summary> 获得一个文件的MD5码 </summary>
         public static string GetMD5FromFile(string fileName) {
