@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Scorpio.Commons {
     public static class FileUtil {
@@ -9,7 +10,15 @@ namespace Scorpio.Commons {
             Lower,
             Upper,
         }
+        //两个文件比较类型
+        public enum CompareType {
+            Size,                   //比较大小
+            SizeAndModifyTime,      //比较大小和文件最后修改时间
+            Content,                //比较内容
+            MD5,                    //比较MD5
+        }
         //public static readonly byte[] BomBuffer = new byte[] { 0xef, 0xbb, 0xbf };
+        private const int ContentBlockSize = 2048;
         public static readonly Encoding UTF8WithBom = new UTF8Encoding(true);
         public static readonly Encoding DefaultEncoding = new UTF8Encoding(false);
         private static string GetName(this string name, NameType nameType) {
@@ -82,6 +91,48 @@ namespace Scorpio.Commons {
             file = Path.GetFullPath(file);
             path = Path.GetFullPath(path);
             return file.Substring(path.Length + 1).Replace("\\", "/");
+        }
+        /// <summary> 比较两个内容是否相同 </summary>
+        static bool CompareArray(byte[] source, byte[] target, int length) {
+            for (var i = 0; i < length; ++i) {
+                if (source[i] != target[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        public static bool CompareFile(string sourceFile, string targetFile) {
+            return CompareFile(sourceFile, targetFile, CompareType.Content);
+        }
+        //比较两个文件是否相同
+        public static bool CompareFile(string sourceFile, string targetFile, CompareType compareType) {
+            if (!File.Exists(sourceFile) || !File.Exists(targetFile)) { 
+                return false;
+            }
+            if (compareType == CompareType.SizeAndModifyTime) {
+                var sourceFileInfo = new FileInfo(sourceFile);
+                var targetFileInfo = new FileInfo(targetFile);
+                return sourceFileInfo.Length == targetFileInfo.Length && sourceFileInfo.LastWriteTimeUtc == targetFileInfo.LastWriteTimeUtc;
+            } else if (compareType == CompareType.Content) {
+                int sourceReaded, targetReaded;
+                byte[] sourceBuffer = new byte[ContentBlockSize];
+                byte[] targetBuffer = new byte[ContentBlockSize];
+                using (var sourceStream = new FileStream(sourceFile, FileMode.Open)) {
+                    using (var targetStream = new FileStream(targetFile, FileMode.Open)) {
+                        while (0 < (sourceReaded = sourceStream.Read(sourceBuffer, 0, ContentBlockSize))) {
+                            targetReaded = targetStream.Read(targetBuffer, 0, ContentBlockSize);
+                            if (sourceReaded != targetReaded || !CompareArray(sourceBuffer, targetBuffer, sourceReaded)) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            } else if (compareType == CompareType.MD5) {
+                return GetMD5FromFile(sourceFile) == GetMD5FromFile(targetFile);
+            } else {
+                return new FileInfo(sourceFile).Length == new FileInfo(targetFile).Length;
+            }
         }
         /// <summary> 根据字符串创建文件 </summary>
         public static void CreateFile(string fileName, string buffer, string[] filePath) {
@@ -237,8 +288,11 @@ namespace Scorpio.Commons {
         public static bool SyncFolder(string source, string target, string[] searchPatterns, bool recursive) {
             return SyncFolder(source, target, searchPatterns, recursive, NameType.None);
         }
-        /// <summary> 同步文件夹 </summary>
         public static bool SyncFolder(string source, string target, string[] searchPatterns, bool recursive, NameType nameType) {
+            return SyncFolder(source, target, searchPatterns, recursive, CompareType.Size, nameType);
+        }
+        /// <summary> 同步文件夹 </summary>
+        public static bool SyncFolder(string source, string target, string[] searchPatterns, bool recursive, CompareType compareType, NameType nameType) {
             source = Path.GetFullPath(source);
             target = Path.GetFullPath(target);
             if (!Directory.Exists(source)) return false;
@@ -260,9 +314,7 @@ namespace Scorpio.Commons {
             foreach (var file in files) {
                 var sourceFile = Path.Combine(source, file);
                 var targetFile = Path.Combine(target, file.GetName(nameType));
-                var sourceFileInfo = new FileInfo(sourceFile);
-                var targetFileInfo = new FileInfo(targetFile);
-                if (!targetFileInfo.Exists || sourceFileInfo.Length != targetFileInfo.Length || sourceFileInfo.LastWriteTime != targetFileInfo.LastWriteTime) {
+                if (!File.Exists(targetFile) || !CompareFile(sourceFile, targetFile, compareType)) {
                     File.Copy(sourceFile, targetFile, true);
                     changed = true;
                 }
