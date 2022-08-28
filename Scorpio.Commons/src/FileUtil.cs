@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Scorpio.Commons {
     public static class FileUtil {
@@ -68,7 +67,7 @@ namespace Scorpio.Commons {
         /// <summary> 删除后缀名 </summary>
         public static string RemoveExtension(string file) {
             var index = file.LastIndexOf(".");
-            return file.Substring(0, index);
+            return index < 0 || index < file.LastIndexOf(Path.AltDirectorySeparatorChar) || index < file.LastIndexOf(Path.DirectorySeparatorChar) ? file : file.Substring(0, index);
         }
         /// <summary> 修改后缀名 </summary>
         public static string ChangeExtension(string file, string extension) {
@@ -106,8 +105,11 @@ namespace Scorpio.Commons {
         }
         //比较两个文件是否相同
         public static bool CompareFile(string sourceFile, string targetFile, CompareType compareType) {
-            if (!File.Exists(sourceFile) || !File.Exists(targetFile)) { 
+            if (!File.Exists(sourceFile) || !File.Exists(targetFile)) {
                 return false;
+            }
+            if (sourceFile == targetFile) {
+                return true;
             }
             var sourceFileInfo = new FileInfo(sourceFile);
             var targetFileInfo = new FileInfo(targetFile);
@@ -219,11 +221,19 @@ namespace Scorpio.Commons {
             return changed;
         }
         /// <summary> 复制文件 </summary>
+        public static void CopyFile(string source, string target) {
+            CopyFile(source, target, true);
+        }
+        /// <summary> 复制文件 </summary>
         public static void CopyFile(string source, string target, bool overwrite) {
             if (File.Exists(source)) {
                 CreateDirectoryByFile(target);
                 File.Copy(source, target, overwrite);
             }
+        }
+        /// <summary> 移动文件 </summary>
+        public static void MoveFile(string source, string target) {
+            MoveFile(source, target, true);
         }
         /// <summary> 移动文件 </summary>
         public static void MoveFile(string source, string target, bool overwrite) {
@@ -236,6 +246,10 @@ namespace Scorpio.Commons {
         /// <summary> 删除文件夹 </summary>
         public static void DeleteFiles(string folder, string searchPattern, bool recursive) {
             DeleteFolder(folder, searchPattern == null ? null : new[] { searchPattern }, recursive);
+        }
+        /// <summary> 删除文件夹 </summary>
+        public static void DeleteFolder(string folder) {
+            DeleteFolder(folder, null, true);
         }
         /// <summary> 删除文件夹 </summary>
         public static void DeleteFolder(string folder, string[] searchPatterns, bool recursive) {
@@ -253,6 +267,10 @@ namespace Scorpio.Commons {
         /// <summary> 拷贝文件夹 </summary>
         public static void CopyFiles(string source, string target, string searchPattern, bool recursive) {
             CopyFolder(source, target, searchPattern == null ? null : new[] { searchPattern }, recursive);
+        }
+        /// <summary> 拷贝文件夹 </summary>
+        public static void CopyFolder(string source, string target) {
+            CopyFolder(source, target, null, true);
         }
         /// <summary> 拷贝文件夹 </summary>
         public static void CopyFolder(string source, string target, string[] searchPatterns, bool recursive) {
@@ -277,6 +295,10 @@ namespace Scorpio.Commons {
         public static void MoveFiles(string source, string target, string searchPattern, bool recursive, bool overwrite) {
             MoveFolder(source, target, searchPattern == null ? null : new[] { searchPattern }, recursive, overwrite);
         }
+        /// <summary> 拷贝文件夹 </summary>
+        public static void MoveFolder(string source, string target) {
+            MoveFolder(source, target, null, true, true);
+        }
         /// <summary> 移动文件夹 </summary>
         public static void MoveFolder(string source, string target, string[] searchPatterns, bool recursive, bool overwrite) {
             MoveFolder(source, target, searchPatterns, recursive, overwrite, NameType.None);
@@ -300,17 +322,22 @@ namespace Scorpio.Commons {
             return SyncFolder(source, target, searchPattern == null ? null : new[] { searchPattern }, recursive);
         }
         /// <summary> 同步文件夹 </summary>
+        public static bool SyncFolder(string source, string target) {
+            return SyncFolder(source, target, null, true, NameType.None);
+        }
+        /// <summary> 同步文件夹 </summary>
         public static bool SyncFolder(string source, string target, string[] searchPatterns, bool recursive) {
             return SyncFolder(source, target, searchPatterns, recursive, NameType.None);
         }
+        /// <summary> 同步文件夹 </summary>
         public static bool SyncFolder(string source, string target, string[] searchPatterns, bool recursive, NameType nameType) {
-            return SyncFolder(source, target, searchPatterns, recursive, CompareType.Size, nameType);
+            return SyncFolder(source, target, searchPatterns, recursive, CompareType.Content, nameType);
         }
         /// <summary> 同步文件夹 </summary>
         public static bool SyncFolder(string source, string target, string[] searchPatterns, bool recursive, CompareType compareType, NameType nameType) {
             source = Path.GetFullPath(source);
             target = Path.GetFullPath(target);
-            if (!Directory.Exists(source)) return false;
+            if (!Directory.Exists(source) || source == target) return false;
             if (!Directory.Exists(target)) { Directory.CreateDirectory(target); }
             var files = new HashSet<string>();
             var existFiles = new HashSet<string>();
@@ -355,8 +382,16 @@ namespace Scorpio.Commons {
             return changed;
         }
         /// <summary> 获取文件列表 </summary>
+        public static List<string> GetFiles(string path, string searchPattern) {
+            return GetFiles(path, searchPattern, SearchOption.TopDirectoryOnly);
+        }
+        /// <summary> 获取文件列表 </summary>
         public static List<string> GetFiles(string path, string searchPattern, SearchOption searchOption) {
             return GetFiles(path, searchPattern == null ? null : new[] { searchPattern }, searchOption);
+        }
+        /// <summary> 获取文件列表 </summary>
+        public static List<string> GetFiles(string path, string[] searchPatterns) {
+            return GetFiles(path, searchPatterns, SearchOption.TopDirectoryOnly);
         }
         /// <summary> 获取文件列表 </summary>
         public static List<string> GetFiles(string path, string[] searchPatterns, SearchOption searchOption) {
@@ -412,10 +447,11 @@ namespace Scorpio.Commons {
         public static string GetMD5FromStream(Stream stream) {
             return MD5.GetMd5String(stream);
         }
-
+        /// <summary> 获得一个文件的MD5 </summary>
         public static byte[] GetMD5(string buffer) {
             return GetMD5(DefaultEncoding.GetBytes(buffer));
         }
+        /// <summary> 获得一个文件的MD5 </summary>
         public static byte[] GetMD5(byte[] buffer) {
             if (buffer == null) return null;
             using (MD5 md = new MD5()) {
