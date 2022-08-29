@@ -41,9 +41,10 @@ namespace Scorpio.Commons {
         }
         internal void SetName(string name) {
             var pars = new HashSet<string>();
-            pars.Add($"-{name}");
             if (param != null && param.Length > 0) {
                 pars.UnionWith(param.Split('|'));
+            } else {
+                pars.Add($"-{name}");
             }
             pars.Remove("");
             finishParam = pars.ToArray();
@@ -53,9 +54,13 @@ namespace Scorpio.Commons {
     }
     public class Perform {
         public class ExecuteData {
+            public string type;
             public string help;
             public string desc;
             public Delegate execute;
+            public string FullHelp => $@"{type} - {desc}
+------------------
+{help}";
         }
         private Dictionary<string, ExecuteData> executes = new Dictionary<string, ExecuteData>();
         public string Help = "";
@@ -83,11 +88,14 @@ namespace Scorpio.Commons {
             PreAction?.Invoke(this, args);
             var data = executes[Type];
             if (hasHelp) {
-                logger.info($@"{Type} - {data.desc}
-------------------
-{data.help}");
+                logger.info(data.FullHelp);
             } else {
-                data.execute.DynamicInvoke(GetParameters(data.execute, CommandLine));
+                try {
+                    data.execute.DynamicInvoke(GetParameters(data.execute, CommandLine));
+                } catch (Exception) {
+                    logger.info(data.FullHelp);
+                    throw;
+                }
             }
             PostAction?.Invoke(this, args);
         }
@@ -109,7 +117,7 @@ namespace Scorpio.Commons {
                     } else if (info.required) {
                         throw new Exception($"参数 {info.finishParamLabel} 是必须的, 不可为空");
                     } else if (!string.IsNullOrEmpty(info.def)) {
-                        args[i] = info.def.ChangeType(paramType);
+                        args[i] = CommandLine.ChangeType(new[] { info.def }, paramType);
                     }
                     continue;
                 }
@@ -173,7 +181,8 @@ namespace Scorpio.Commons {
             AddExecute(type, type, execute);
         }
         public void AddExecute(string type, string desc, Delegate execute) {
-            executes[type.ToLowerInvariant()] = new ExecuteData() { desc = desc, help = GetHelp(execute), execute = execute };
+            type = type.ToLowerInvariant();
+            executes[type] = new ExecuteData() { type = type, desc = desc, help = GetHelp(execute), execute = execute };
         }
         public string GetPath(params string[] keys) {
             return GetPath(keys, false);

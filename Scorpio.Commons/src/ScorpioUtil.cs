@@ -236,52 +236,6 @@ namespace Scorpio.Commons {
             }
             return builder.ToString();
         }
-        public static object ChangeType(this string value, Type type) {
-            if (type.IsArray) {
-                var elementType = type.GetElementType();
-                var values = value.Split(',');
-                var result = Array.CreateInstance(elementType, values.Length);
-                for (var i = 0; i < values.Length; ++i) {
-                    result.SetValue(values[i].ChangeElementType(elementType), i);
-                }
-                return result;
-            } else {
-                return value.ChangeElementType(type);
-            }
-        }
-        static object ChangeElementType(this string value, Type type) {
-            if (type == typeof(string)) {
-                return value;
-            } else if (type == typeof(bool)) {
-                if (string.IsNullOrEmpty(value)) {
-                    return true;
-                } else {
-                    value = value.ToLowerInvariant();
-                    return value == "true" || value == "yes" || value == "1";
-                }
-            } else if (type == typeof(sbyte) ||
-                       type == typeof(byte) ||
-                       type == typeof(short) ||
-                       type == typeof(ushort) ||
-                       type == typeof(int) ||
-                       type == typeof(uint) ||
-                       type == typeof(long) ||
-                       type == typeof(ulong) ||
-                       type == typeof(float) ||
-                       type == typeof(double) ||
-                       type == typeof(decimal)) {
-                return Convert.ChangeType(value, type);
-            } else if (type.IsEnum) {
-                if (int.TryParse(value, out var result)) {
-                    return Enum.ToObject(type, result);
-                } else {
-                    return Enum.Parse(type, value, true);
-                }
-            } else if (type == typeof(DateTime)) {
-                return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(double.Parse(value));
-            } else {
-                return null;
-            }
-        }
+        
     }
 }
