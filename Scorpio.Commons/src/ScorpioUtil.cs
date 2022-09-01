@@ -42,6 +42,32 @@ namespace Scorpio.Commons {
         public static byte[] FromBase64(string base64) {
             return Convert.FromBase64String(base64);
         }
+        public static string StartProcess(string fileName, string arguments, string workingDirectory) {
+            try {
+                using (var process = new Process()) {
+                    process.StartInfo.FileName = fileName;
+                    if (!string.IsNullOrEmpty(workingDirectory)) {
+                        process.StartInfo.WorkingDirectory = workingDirectory;
+                    }
+                    if (arguments != null) {
+                        process.StartInfo.Arguments = arguments;
+                    }
+                    process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
+                    process.EnableRaisingEvents = true;
+                    process.Start();
+                    var result = process.StandardOutput.ReadToEnd();
+                    process.WaitForExit();
+                    return result;
+                }
+            } catch (Exception e) {
+                logger.error("StartProcess Error : " + e.ToString());
+            }
+            return null;
+        }
         public static int StartProcess(string fileName, string workingDirectory = null, IEnumerable<string> arguments = null, Action<Process> preStart = null, Action<Process> waitExit = null) {
             try {
                 using (var process = new Process()) {
@@ -60,6 +86,7 @@ namespace Scorpio.Commons {
                     process.StartInfo.CreateNoWindow = true;
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
                     process.EnableRaisingEvents = true;
                     preStart?.Invoke(process);
                     process.Start();
@@ -89,6 +116,7 @@ namespace Scorpio.Commons {
                     process.StartInfo.CreateNoWindow = false;
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
                     process.StartInfo.RedirectStandardInput = true;
                     process.EnableRaisingEvents = true;
                     process.Start();
