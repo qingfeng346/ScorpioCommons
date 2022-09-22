@@ -30,6 +30,7 @@ namespace Scorpio.Commons {
         public List<string> Args { get; } = new List<string>();
         public IReadOnlyDictionary<string, Argument> Arguments => arguments;
         public CommandLine Parser(string[] args) {
+            args = Array.ConvertAll(args, arg => arg.Trim());
             arguments.Clear();
             Type = "";
             Argument argument = null;
