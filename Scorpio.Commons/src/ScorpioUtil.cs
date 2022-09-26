@@ -5,9 +5,25 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace Scorpio.Commons {
     public static partial class ScorpioUtil {
+        public class ProcessResult {
+            public int exitCode;
+            public string output;
+            public string error;
+            public ProcessResult(Process process) {
+                exitCode = process.ExitCode;
+                if (process.StartInfo.RedirectStandardOutput) {
+                    output = process.StandardOutput.ReadToEnd();
+                }
+                if (process.StartInfo.RedirectStandardError) {
+                    error = process.StandardError.ReadToEnd();
+                }
+            }
+        }
         const string DefaultUserAgent = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)";
         const int READ_LENGTH = 8192;
         public static readonly string BaseDirectory = AppDomain.CurrentDomain.BaseDirectory;
@@ -42,110 +58,61 @@ namespace Scorpio.Commons {
         public static byte[] FromBase64(string base64) {
             return Convert.FromBase64String(base64);
         }
-        public static string StartProcess(string fileName, string arguments, string workingDirectory) {
-            try {
-                using (var process = new Process()) {
-                    process.StartInfo.FileName = fileName;
-                    if (!string.IsNullOrEmpty(workingDirectory)) {
-                        process.StartInfo.WorkingDirectory = workingDirectory;
-                    }
-                    if (arguments != null) {
-                        process.StartInfo.Arguments = arguments;
-                    }
-                    process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.RedirectStandardError = true;
-                    process.EnableRaisingEvents = true;
-                    process.Start();
-                    var result = process.StandardOutput.ReadToEnd();
-                    process.WaitForExit();
-                    return result;
+        static void StartProcess(string fileName, string workingDirectory, string arguments, Action<Process> preStart, Action<Process> postStart) {
+            using (var process = new Process()) {
+                process.StartInfo.FileName = fileName;
+                if (!string.IsNullOrEmpty(workingDirectory)) {
+                    process.StartInfo.WorkingDirectory = workingDirectory;
                 }
-            } catch (Exception e) {
-                logger.error("StartProcess Error : " + e.ToString());
-            }
-            return null;
-        }
-        public static int StartProcess(string fileName, string workingDirectory = null, IEnumerable<string> arguments = null, Action<Process> preStart = null, Action<Process> waitExit = null) {
-            try {
-                using (var process = new Process()) {
-                    process.StartInfo.FileName = fileName;
-                    if (!string.IsNullOrEmpty(workingDirectory)) {
-                        process.StartInfo.WorkingDirectory = workingDirectory;
-                    }
-                    if (arguments != null) {
-                        var builder = new StringBuilder();
-                        foreach (var argument in arguments) {
-                            builder.Append($@" ""{argument}"" ");
-                        }
-                        process.StartInfo.Arguments = builder.ToString();
-                    }
-                    process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.RedirectStandardError = true;
-                    process.EnableRaisingEvents = true;
-                    preStart?.Invoke(process);
-                    process.Start();
-                    process.OutputDataReceived += (sender, args) => {
-                        Console.WriteLine(args.Data);
-                    };
-                    process.ErrorDataReceived += (sender, args) => {
-                        Console.Error.WriteLine(args.Data);
-                    };
-                    waitExit?.Invoke(process);
-                    process.WaitForExit();
-                    return process.ExitCode;
+                if (!string.IsNullOrEmpty(arguments)) {
+                    process.StartInfo.Arguments = arguments;
                 }
-            } catch (Exception e) {
-                logger.error("StartProcess Error : " + e.ToString());
+                process.StartInfo.CreateNoWindow = true;
+                process.StartInfo.UseShellExecute = true;
+                process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
+                preStart?.Invoke(process);
+                process.Start();
+                postStart?.Invoke(process);
             }
-            return -1;
         }
-        public static int StartCwd(string fileName, string workingDirectory = null, IEnumerable<string> arguments = null, Action<Process> preStart = null, Action<Process> waitExit = null) {
-            try {
-                using (var process = new Process()) {
-                    process.StartInfo.FileName = "cmd";
-                    if (!string.IsNullOrEmpty(workingDirectory)) {
-                        process.StartInfo.WorkingDirectory = workingDirectory;
-                    }
-                    process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
+        public static void Start(string fileName, string workingDirectory = null, string arguments = null) {
+            StartProcess(fileName, workingDirectory, arguments, null, null);
+        }
+        public static void StartPowershell(string fileName, string workingDirectory = null, string arguments = null) {
+            Start("pwsh", workingDirectory, $"-ExecutionPolicy Unrestricted {fileName} {arguments}");
+        }
+        public static void StartShell(string fileName, string workingDirectory = null, string arguments = null) {
+            Start("sh", workingDirectory, $"{fileName} {arguments}");
+        }
+        public static ProcessResult Execute(string fileName, string workingDirectory = null, string arguments = null, bool showWindow = false) {
+            ProcessResult processResult = null;
+            StartProcess(fileName, workingDirectory, arguments, (process) => {
+                if (showWindow) {
                     process.StartInfo.CreateNoWindow = false;
+                    process.StartInfo.UseShellExecute = true;
+                } else {
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
-                    process.StartInfo.RedirectStandardInput = true;
-                    process.EnableRaisingEvents = true;
-                    process.Start();
-                    process.OutputDataReceived += (sender, args) => {
-                        Console.WriteLine(args.Data);
-                    };
-                    process.ErrorDataReceived += (sender, args) => {
-                        Console.Error.WriteLine(args.Data);
-                    };
-                    var builder = new StringBuilder();
-                    builder.Append(fileName);
-                    if (arguments != null) {
-                        foreach (var argument in arguments) {
-                            builder.Append($@" ""{argument}"" ");
-                        }
-                    }
-                    preStart?.Invoke(process);
-                    process.StandardInput.WriteLine(builder.ToString());
-                    process.StandardInput.WriteLine();  //防止某些cmd有pause
-                    process.StandardInput.WriteLine("exit");
-                    waitExit?.Invoke(process);
-                    process.WaitForExit();
-                    return process.ExitCode;
+    #if UNITY_EDITOR_WIN
+                    process.StartInfo.StandardOutputEncoding = Encoding.GetEncoding("GBK");
+                    process.StartInfo.StandardErrorEncoding = Encoding.GetEncoding("GBK");
+    #endif
                 }
-            } catch (Exception e) {
-                logger.error("StartProcess Error : " + e.ToString());
-            }
-            return -1;
+                process.EnableRaisingEvents = true;
+            }, (process) => {
+                process.WaitForExit();
+                processResult = new ProcessResult(process);
+            });
+            return processResult;
         }
+        public static ProcessResult ExecutePowershell(string fileName, string workingDirectory = null, string arguments = null, bool showWindow = false) {
+            return Execute("pwsh", workingDirectory, $"-ExecutionPolicy Unrestricted {fileName} {arguments}", showWindow);
+        }
+        public static ProcessResult ExecuteShell(string fileName, string workingDirectory = null, string arguments = null) {
+            return Execute("sh", workingDirectory, $"{fileName} {arguments}", false);
+        }
+        
 
         public static bool IsWindows() {
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
@@ -155,32 +122,6 @@ namespace Scorpio.Commons {
         }
         public static bool IsMacOS() {
             return RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-        }
-
-        public static void RegisterApplication(string app) {
-            if (IsWindows()) {
-                var path = Path.GetDirectoryName(app);
-                var environmentVariables = new List<string>(Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User).Split(';'));
-                if (!environmentVariables.Contains(path)) {
-                    environmentVariables.Add(path);
-                    Environment.SetEnvironmentVariable("Path", string.Join(";", environmentVariables.ToArray()), EnvironmentVariableTarget.User);
-                }
-            } else {
-                StartProcess("ln", $"-s {app} /usr/local/bin/");
-            }
-        }
-        public static void UnregisterApplication(string app) {
-            if (IsWindows()) {
-                var path = Path.GetFullPath(Path.GetDirectoryName(app));
-                var environmentVariables = new List<string>(Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User).Split(';'));
-                if (environmentVariables.Contains(path)) {
-                    environmentVariables.Remove(path);
-                    Environment.SetEnvironmentVariable("Path", string.Join(";", environmentVariables.ToArray()), EnvironmentVariableTarget.User);
-                }
-            } else {
-                var fileName = Path.GetFileName(app);
-                FileUtil.DeleteFile($"/usr/local/bin/{fileName}");
-            }
         }
         public static void PrintSystemInfo() {
             string osPlatform = "Other";
@@ -264,6 +205,47 @@ namespace Scorpio.Commons {
             }
             return builder.ToString();
         }
-        
+        //多线程运行列表
+        public static void StartQueue<T>(IEnumerable<T> datas, Func<T, int, Task> func, int queue = 16) {
+            var sync = new object();
+            var tasks = new List<Task<string>>();
+            var list = datas.ToArray();
+            var length = list.Length;
+            var current = 0;
+            var isError = false;
+            for (var i = 0; i < queue; i++) {
+                var task = Task.Run(async () => {
+                    try {
+                    Start:
+                        if (isError) { return ""; }
+                        int index;
+                        T data = default;
+                        lock (sync) {
+                            if (current < length) {
+                                index = current++;
+                                data = list[index];
+                            } else {
+                                return "";
+                            }
+                        }
+                        await func(data, index);
+                        goto Start;
+                    } catch (Exception e) {
+                        return e.ToString();
+                    }
+                });
+                tasks.Add(task);
+            }
+            while (tasks.Count > 0) {
+                var taskIndex = Task.WaitAny(tasks.ToArray());
+                var taskResult = tasks[taskIndex].Result;
+                tasks.RemoveAt(taskIndex);
+                if (!string.IsNullOrEmpty(taskResult)) {
+                    isError = true;
+                    Task.WaitAll(tasks.ToArray());
+                    throw new Exception(taskResult);
+                }
+            }
+        }
     }
 }
