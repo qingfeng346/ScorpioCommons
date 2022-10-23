@@ -84,6 +84,15 @@ namespace Scorpio.Commons {
         public static void StartShell(string fileName, string workingDirectory = null, string arguments = null) {
             Start("sh", workingDirectory, $"{fileName} {arguments}");
         }
+        public static ProcessResult Execute(string fileName, string workingDirectory = null, IEnumerable<string> arguments = null, bool showWindow = false) {
+            var builder = new StringBuilder();
+            if (arguments != null) {
+                foreach (var arg in arguments) {
+                    builder.Append("\"" + arg + "\" ");
+                }
+            }
+            return Execute(fileName, workingDirectory, builder.ToString(), showWindow);
+        }
         public static ProcessResult Execute(string fileName, string workingDirectory = null, string arguments = null, bool showWindow = false) {
             ProcessResult processResult = null;
             StartProcess(fileName, workingDirectory, arguments, (process) => {
