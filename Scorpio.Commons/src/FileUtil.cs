@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Scorpio.Commons {
     public static class FileUtil {
@@ -68,7 +67,7 @@ namespace Scorpio.Commons {
         /// <summary> 删除后缀名 </summary>
         public static string RemoveExtension(string file) {
             var index = file.LastIndexOf(".");
-            return file.Substring(0, index);
+            return index < 0 || index < file.LastIndexOf(Path.AltDirectorySeparatorChar) || index < file.LastIndexOf(Path.DirectorySeparatorChar) ? file : file.Substring(0, index);
         }
         /// <summary> 修改后缀名 </summary>
         public static string ChangeExtension(string file, string extension) {
@@ -101,6 +100,7 @@ namespace Scorpio.Commons {
             }
             return true;
         }
+        /// <summary> 比较两个文件是否相同 </summary>
         public static bool CompareFile(string sourceFile, string targetFile) {
             return CompareFile(sourceFile, targetFile, CompareType.Content);
         }
@@ -303,6 +303,7 @@ namespace Scorpio.Commons {
         public static bool SyncFolder(string source, string target, string[] searchPatterns, bool recursive) {
             return SyncFolder(source, target, searchPatterns, recursive, NameType.None);
         }
+        /// <summary> 同步文件夹 </summary>
         public static bool SyncFolder(string source, string target, string[] searchPatterns, bool recursive, NameType nameType) {
             return SyncFolder(source, target, searchPatterns, recursive, CompareType.Size, nameType);
         }
@@ -412,10 +413,11 @@ namespace Scorpio.Commons {
         public static string GetMD5FromStream(Stream stream) {
             return MD5.GetMd5String(stream);
         }
-
+        /// <summary> 获得一个文件的MD5 </summary>
         public static byte[] GetMD5(string buffer) {
             return GetMD5(DefaultEncoding.GetBytes(buffer));
         }
+        /// <summary> 获得一个文件的MD5 </summary>
         public static byte[] GetMD5(byte[] buffer) {
             if (buffer == null) return null;
             using (MD5 md = new MD5()) {

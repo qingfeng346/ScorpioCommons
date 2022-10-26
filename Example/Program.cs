@@ -4,14 +4,15 @@ using Scorpio.Commons;
 namespace Example {
     class Program {
         static void Main(string[] args) {
+            Console.WriteLine(FileUtil.RemoveExtension("aaaa/bc.cbb\\ccc"));
             //Console.WriteLine(ScorpioUtil.RequestString("https://qingfeng346.gitee.io/spm/sco/package.json"));
             //FileUtil.SyncFolder(@"C:\Users\qingf\Desktop\test\aaa\", @"C:\Users\qingf\Desktop\test\bbb", null, true);
             var perform = new Perform();
-            perform.AddExecute("test", "测试函数", test);
+            //perform.AddExecute("test", "测试函数", test);
             // perform.AddExecute("Test2", "测试函数", update);
             // perform.AddExecute("Test3", "测试函数", update);
             // perform.AddExecute("Test4", "测试函数", update);
-            perform.Start(args);
+            //perform.Start(args);
             //perform.Help = "fewafawefaewfawefawe";
             //perform.AddExecute("123123", "help", null);
             //perform.Start(args);
@@ -27,12 +28,12 @@ namespace Example {
             //Console.WriteLine(b);
             //Console.WriteLine(c);
         }
-        static void test([ParamterInfo(label = "label", param = new[]{"-aa", "-bb", "--aa"},  required = false)] string[] strs,
-                           [ParamterInfo(label = "label")] int[] ints, int c = 200) {
-            //Console.WriteLine(a);
-            //Console.WriteLine(b);
-            //Console.WriteLine(c);
-            int a = 0;
-        }
+        //static void test([ParamterInfo(label = "label", param = new[]{"-aa", "-bb", "--aa"},  required = false)] string[] strs,
+        //                   [ParamterInfo(label = "label")] int[] ints, int c = 200) {
+        //    //Console.WriteLine(a);
+        //    //Console.WriteLine(b);
+        //    //Console.WriteLine(c);
+        //    int a = 0;
+        //}
     }
 }
