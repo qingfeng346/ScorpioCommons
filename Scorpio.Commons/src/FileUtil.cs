@@ -58,6 +58,7 @@ namespace Scorpio.Commons {
         }
         /// <summary> 创建路径 </summary>
         public static bool CreateDirectory(string path) {
+            if (string.IsNullOrWhiteSpace(path)) return false;
             if (!Directory.Exists(path)) {
                 Directory.CreateDirectory(path);
                 return true;
