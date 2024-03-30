@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace Scorpio.Commons {
     public class ConsoleLogger : ILogger {
         public void debug(string value) {

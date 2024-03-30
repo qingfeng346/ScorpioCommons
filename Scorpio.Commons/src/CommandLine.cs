@@ -4,7 +4,8 @@ using System.Linq;
 
 namespace Scorpio.Commons {
     public class CommandLine {
-        private readonly string[] EMPTY_ARGS = new string[0];
+        private readonly static string[] EMPTY_ARGS = new string[0];
+        private readonly static DateTime BaseTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         public class Argument {
             private List<string> args = new List<string>();
             public Argument(string name) {
@@ -108,13 +109,9 @@ namespace Scorpio.Commons {
         public static object ChangeType(string[] values, Type type) {
             if (type.IsArray) {
                 var elementType = type.GetElementType();
-                var vals = new List<string>();
-                foreach (var v in values) {
-                    vals.AddRange(v.Split(','));
-                }
-                var result = Array.CreateInstance(elementType, vals.Count);
-                for (var i = 0; i < vals.Count; ++i) {
-                    result.SetValue(ChangeElementType(vals[i], elementType), i);
+                var result = Array.CreateInstance(elementType, values.Length);
+                for (var i = 0; i < values.Length; ++i) {
+                    result.SetValue(ChangeElementType(values[i], elementType), i);
                 }
                 return result;
             } else {
@@ -150,7 +147,7 @@ namespace Scorpio.Commons {
                     return Enum.Parse(type, value, true);
                 }
             } else if (type == typeof(DateTime)) {
-                return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(double.Parse(value));
+                return BaseTime.AddMilliseconds(double.Parse(value));
             } else {
                 return null;
             }

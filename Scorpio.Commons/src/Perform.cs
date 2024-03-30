@@ -7,42 +7,16 @@ using System.Linq;
 
 namespace Scorpio.Commons {
     public class ParamterInfoAttribute : Attribute {
-        public bool required { get; set; } = true;
-        public string label { get; set; }
-        public string def { get; set; }
-        public string param { get; set; }
-        public ParamterInfoAttribute() { }
-        public ParamterInfoAttribute(string label) {
-            this.label = label;
-        }
-        public ParamterInfoAttribute(string label, bool required) {
-            this.label = label;
-            this.required = required;
-        }
-        public ParamterInfoAttribute(string label, string param) {
-            this.label = label;
-            this.param = param;
-        }
-        public ParamterInfoAttribute(string label, string param, bool required) {
-            this.label = label;
-            this.param = param;
-            this.required = required;
-        }
-        public ParamterInfoAttribute(string label, string param, string def) {
-            this.label = label;
-            this.param = param;
-            this.def = def;
-        }
-        public ParamterInfoAttribute(string label, string param, string def, bool required) {
-            this.label = label;
-            this.param = param;
-            this.def = def;
-            this.required = required;
-        }
+        public bool Required { get; set; }
+        public string Label { get; set; }
+        public string[] Defaults { get; set; }
+        public string[] Params { get; set; }
+        public string Default { get => Defaults[0]; set => Defaults = new string[] { value }; }
+        public string Param { get => Params[0]; set => Params = new string[] { value }; }
         internal void SetName(string name) {
             var pars = new HashSet<string>();
-            if (param != null && param.Length > 0) {
-                pars.UnionWith(param.Split('|'));
+            if (Params != null && Params.Length > 0) {
+                pars.UnionWith(Params);
             } else {
                 pars.Add($"-{name}");
             }
@@ -114,10 +88,10 @@ namespace Scorpio.Commons {
                     info.SetName(param.Name);
                     if (commandLine.HadValue(info.finishParam)) {
                         args[i] = commandLine.GetValue(paramType, info.finishParam);
-                    } else if (info.required) {
+                    } else if (info.Required) {
                         throw new Exception($"参数 {info.finishParamLabel} 是必须的, 不可为空");
-                    } else if (!string.IsNullOrEmpty(info.def)) {
-                        args[i] = CommandLine.ChangeType(new[] { info.def }, paramType);
+                    } else if (info.Defaults != null && info.Defaults.Length > 0) {
+                        args[i] = CommandLine.ChangeType(info.Defaults, paramType);
                     }
                     continue;
                 }
@@ -149,10 +123,11 @@ namespace Scorpio.Commons {
                 if (info == null) { continue; }
                 info.SetName(param.Name);
                 builder.Append($"  {info.finishParamLabel}".GetAlign(maxLength + 4));
-                builder.Append(info.required ? "(必须)" : "(选填)");
-                builder.Append(info.label);
-                if (!string.IsNullOrEmpty(info.def)) {
-                    builder.Append($" 默认:{info.def}");
+                builder.Append(info.Required ? "(必须)" : "(选填)");
+                builder.Append(info.Label);
+                if (info.Defaults != null && info.Defaults.Length > 0) {
+                    var def = string.Join(" ", info.Defaults);
+                    builder.Append($" 默认值:{def}");
                 }
                 builder.AppendLine();
             }
