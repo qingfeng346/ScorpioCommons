@@ -106,6 +106,8 @@ namespace Scorpio.Commons {
                     args[i] = commandLine.GetValue(name, paramType);
                 } else if (param.HasDefaultValue) {
                     args[i] = param.DefaultValue;
+                } else if (paramType.IsArray) {
+                    args[i] = Array.CreateInstance(paramType.GetElementType(), 0);
                 } else {
                     args[i] = paramType.IsValueType ? Activator.CreateInstance(paramType) : null;
                 }

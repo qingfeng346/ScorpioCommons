@@ -5,6 +5,9 @@
     <Authors>while</Authors>
     <PackageProjectUrl>https://github.com/qingfeng346/ScorpioCommons</PackageProjectUrl>
     <Description>一些工具类</Description>
-    <PackageReadmeFile>../README.md</PackageReadmeFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+  <ItemGroup>
+      <None Include="../README.md" Pack="true" PackagePath="/"/>
+  </ItemGroup>
 </Project>
