@@ -11,8 +11,14 @@ namespace Scorpio.Commons {
         public string Label { get; set; }
         public string[] Defaults { get; set; }
         public string[] Params { get; set; }
-        public string Default { get => Defaults[0]; set => Defaults = new string[] { value }; }
-        public string Param { get => Params[0]; set => Params = new string[] { value }; }
+        public string Default { 
+            get => string.Join("|", Defaults); 
+            set => Defaults = value.Split("|");
+        }
+        public string Param { 
+            get => string.Join('|', Params);
+            set => Params = value.Split("|");
+        }
         internal void SetName(string name) {
             var pars = new HashSet<string>();
             if (Params != null && Params.Length > 0) {
