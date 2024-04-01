@@ -13,11 +13,11 @@ namespace Scorpio.Commons {
         public string[] Params { get; set; }
         public string Default { 
             get => string.Join("|", Defaults); 
-            set => Defaults = value.Split("|");
+            set => Defaults = value.Split('|');
         }
         public string Param { 
-            get => string.Join('|', Params);
-            set => Params = value.Split("|");
+            get => string.Join("|", Params);
+            set => Params = value.Split('|');
         }
         internal void SetName(string name) {
             var pars = new HashSet<string>();
